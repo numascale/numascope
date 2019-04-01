@@ -27,12 +27,12 @@ var (
    interval   = 1
 )
 
-func numastat() {
+func vmxstat() {
    switch {
    case flag.NArg() == 1:
       interval, _ = strconv.Atoi(flag.Arg(0))
    case flag.NArg() > 1:
-      fmt.Println("usage: numascope [interval]")
+      fmt.Println("usage: vmxstat [interval]")
       os.Exit(1)
    }
 
@@ -85,8 +85,8 @@ func main() {
    flag.Parse()
 
    exe := path.Base(os.Args[0])
-   if exe == "numastat" {
-      numastat()
+   if exe == "vmxstat" {
+      vmxstat()
    }
 
    // FIXME for numascope
