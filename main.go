@@ -19,8 +19,11 @@ const (
 )
 
 var (
+   advanced   = flag.Bool("advanced", false, "list all events")
    listenAddr = flag.String("listenAddr", "localhost:8080", "HTTP service listen address")
    debug      = flag.Bool("debug", false, "print debugging output")
+   events     = flag.String("events", "", "comma-separated list of events")
+   list       = flag.Bool("list", false, "list detected events")
    interval   = 1
 )
 
@@ -36,8 +39,15 @@ func numastat() {
    dev := &Vmstat{} // Numachip2{}
    supported := dev.probe()
 
-   if len(*supported) == 0 {
-      fmt.Println("Numachip2 not detected")
+   if *list {
+      fmt.Printf("events supported:\n")
+
+      for _, val := range *supported {
+         if *advanced || !val.advanced {
+            fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
+         }
+      }
+
       os.Exit(0)
    }
 
