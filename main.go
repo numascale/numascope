@@ -34,13 +34,17 @@ func numastat() {
    }
 
    dev := &Numachip2{}
+
    if dev.probe() == false {
       fmt.Println("Numachip2 not detected")
       os.Exit(0)
    }
 
+   supported := dev.supported()
+   selected := supported[5].index
+
    delay := time.Duration(interval) * time.Second
-   dev.enable([]uint16{statRdBlkXRec})
+   dev.enable([]uint16{selected})
 
    for {
       time.Sleep(delay)
