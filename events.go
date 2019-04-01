@@ -6,3 +6,10 @@ type Events interface {
    sample() []uint32
 }
 
+type Event struct {
+   index int16 // -1 means unindexed
+   advanced bool
+   mnemonic string
+   desc string
+}
+
