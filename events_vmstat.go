@@ -4,7 +4,6 @@ import (
    "os"
    "strings"
    "strconv"
-   "fmt"
    "time"
 )
 
@@ -182,8 +181,8 @@ func (d *Vmstat) sample() []uint64 {
    }
 
    for i, offset := range d.enabled {
-      val := (m[vmstatEvents[offset].mnemonic] - d.last[i]) * 1000000000 / delta
-      samples[i] = val
+      val := m[vmstatEvents[offset].mnemonic]
+      samples[i] = (val - d.last[i]) * 1000000000 / delta
       d.last[i] = val
    }
 

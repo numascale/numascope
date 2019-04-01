@@ -42,12 +42,28 @@ func numastat() {
    }
 
    delay := time.Duration(interval) * time.Second
-   dev.enable([]uint16{13})
+   enabled := []uint16{13}
+   dev.enable(enabled)
+   line := 0
 
    for {
       time.Sleep(delay)
+
+      // print column headings
+      if line == 0 {
+         for _, val := range enabled {
+            fmt.Printf("%s ", (*supported)[val].mnemonic)
+         }
+         fmt.Println("")
+      }
+      line = (line + 1) % 25
+
       samples := dev.sample()
-      fmt.Printf("%v\n", samples)
+      for i, _ := range samples {
+         name := (*supported)[enabled[i]].mnemonic
+         fmt.Printf("%*d ", len(name), samples[i])
+      }
+      fmt.Println("")
 
       if flag.NArg() == 0 {
          break
