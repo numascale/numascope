@@ -1,9 +1,8 @@
 package main
 
 import (
-   "fmt"
-   "golang.org/x/sys/unix"
    "unsafe"
+   "golang.org/x/sys/unix"
 )
 
 type EventsNumachip2 interface {
@@ -23,16 +22,16 @@ type Numachip2 struct {
 const (
    mapBase        = 0xf0000000
    mapLen         = 0x4000
-   statsLen       = 0x1000
+   statsLen       = 0x590
    venDevId       = 0x07001b47
    venDev         = 0x0000 / 4
    statCountTotal = 0x3050 / 4
    statCtrl       = 0x3058 / 4
    statCounters   = 0x3100 / 4
+   wrapLimit      = 0xffffffffffff // 48 bits
 
    // stats counters
    statElapsed   = 0x000 / 8
-   statRdBlkXRec = 0x218 / 8
 )
 
 var (
@@ -66,17 +65,17 @@ var (
       {0x138, false, "n2RespSiuLmpe", "responses from SIU to LMPE"},
       {0x140, false, "n2ValidCycAckRespSiuLmpe", "valid cycles acked for responses from SIU to LMPE"},
       {0x148, false, "n2WaitCycRespSiuLmpe", "wait cycles for responses from from SIU to LMPE"},
-      {0x210, false, "n2VicBlkX", "VicBlk and VicBlkClean commands received on Hypertransport"},
+      {0x210, false, "n2VicBlkXRecv", "VicBlk and VicBlkClean commands received on Hypertransport"},
       {0x218, false, "n2RdBlkXRecv", "RdBlk and RdBlkS commands received on Hypertransport"},
       {0x220, false, "n2RdBlkModRecv", "RdBlkMod commands received on Hypertransport"},
       {0x228, false, "n2ChangeToDirtyRecv", "ChangeToDirty commands received on Hypertransport"},
       {0x230, false, "n2RdSizedRecv", "RdSized commands received on Hypertransport"},
       {0x238, false, "n2WrSizedRecv", "WrSized commands received on Hypertransport"},
-      {0x240, false, "n2DirPrb", "directed Probe commands received on Hypertransport"},
-      {0x248, false, "n2BcastPrb", "broadcast Probe commands received on Hypertransport"},
+      {0x240, false, "n2DirPrbRecv", "directed Probe commands received on Hypertransport"},
+      {0x248, false, "n2BcastPrbRecv", "broadcast Probe commands received on Hypertransport"},
       {0x250, false, "n2BcastCmdRecv", "Broadcast commands received on Hypertransport"},
       {0x258, false, "n2RdRespCmdRecv", "RdResponse commands received on Hypertransport"},
-      {0x260, false, "n2PrbRespCmd", "ProbeResponse commands received on Hypertransport"},
+      {0x260, false, "n2PrbRespCmdRecv", "ProbeResponse commands received on Hypertransport"},
       {0x268, false, "n2CachelinesRecv", "data packets with full cachelines of data received on Hypertransport"},
       {0x270, false, "n2PartCachelinesRecv", "data packets with less than a full cache line received on Hypertransport"},
       {0x278, false, "n2VicBlkXSent", "VicBlk and VicBlkClean commands sent on Hypertransport"},
@@ -196,23 +195,30 @@ func (d *Numachip2) sample() []uint64 {
    samples := make([]uint64, len(d.events))
    d.regs[statCtrl] = 1 // disable counting
 
-   dElapsed := d.stats[statElapsed]
+   val := d.stats[statElapsed]
    var interval uint64 // in units of 5ns
 
    // if wrapped, add remainder
-   if dElapsed < d.last[statElapsed] {
-      interval = dElapsed + (0xffffffffffffffff - dElapsed)
+   if val < d.last[statElapsed] {
+      interval = val + (wrapLimit - val)
    } else {
-      interval = dElapsed - d.lastElapsed
+      interval = val - d.lastElapsed
    }
 
-   d.lastElapsed = dElapsed
+   d.lastElapsed = val
 
-   // FIXME handle wrapping
    for i, offset := range d.events {
-      val := d.stats[offset]
-      fmt.Printf("i %v, interval %v, offset %v, val %v, last %v\n", i, interval, offset, val, d.last[i])
-      samples[i] = (val - d.last[i]) * 200000000 / interval
+      val = d.stats[numachip2Events[offset].index/8]
+      var delta uint64
+
+      // if wrapped, add remainder
+      if val < d.last[i] {
+         delta = val + (wrapLimit - val)
+      } else {
+         delta = val - d.last[i]
+      }
+
+      samples[i] = delta * 200000000 / interval // clockcycles @ 200MHz
       d.last[i] = val
    }
 
