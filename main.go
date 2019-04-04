@@ -7,6 +7,7 @@ import (
    "path"
    "strconv"
    "time"
+   "strings"
 )
 
 type Reading struct {
@@ -22,7 +23,7 @@ var (
    advanced   = flag.Bool("advanced", false, "list all events")
    listenAddr = flag.String("listenAddr", "localhost:8080", "HTTP service listen address")
    debug      = flag.Bool("debug", false, "print debugging output")
-   events     = flag.String("events", "", "comma-separated list of events")
+   events     = flag.String("events", "pgfault,pgmajfault,numa_hit,numa_miss,numa_foreign,numa_local,numa_other", "comma-separated list of events")
    list       = flag.Bool("list", false, "list detected events")
    interval   = 1
 )
@@ -36,7 +37,8 @@ func vmxstat() {
       os.Exit(1)
    }
 
-   dev := &Vmstat{} // Numachip2{}
+//   dev := &Vmstat{}
+   dev := &Numachip2{}
    supported := dev.probe()
 
    if *list {
@@ -52,7 +54,17 @@ func vmxstat() {
    }
 
    delay := time.Duration(interval) * time.Second
-   enabled := []uint16{13}
+   elems := strings.Split(*events, ",")
+   var enabled []uint16
+
+   for _, elem := range elems {
+      for j, val := range *supported {
+         if val.mnemonic == elem {
+            enabled = append(enabled, uint16(j))
+         }
+      }
+   }
+
    dev.enable(enabled)
    line := 0
 
