@@ -52,7 +52,8 @@ var (
       {0x098, false, "n2RespSiuRmpe", "responses from SIU to RMPE"},
       {0x0A0, false, "n2ValidCycAckRespSiuRmpe", "valid cycles acked for responses from SIU to RMPE"},
       {0x0A8, false, "n2WaitCycRespSiuRmpe", "wait cycles for responses from from SIU to RMPE"},
-      {0x0B0, false, "n2CycHalfLmpeUsed", "cycles at least half of the available LMPE contexts were in use"},      {0x0B8, false, "n2CycLmpeFreePiu", "cycles the LMPE did have free contexts for SIU accesses"},
+      {0x0B0, false, "n2CycHalfLmpeUsed", "cycles at least half of the available LMPE contexts were in use"},
+      {0x0B8, false, "n2CycLmpeFreePiu", "cycles the LMPE did have free contexts for SIU accesses"},
       {0x0D8, false, "n2CycLmpeFreeSiu", "cycles the LMPE did have free contexts for PIU accesses"},
       {0x0F8, false, "n2ReqPiuLmpe", "requests from PIU to LMPE"},
       {0x100, false, "n2WaitcycReqPiuLmpe", "wait cycles for requests from from PIU to LMPE"},
@@ -199,7 +200,7 @@ func (d *Numachip2) sample() []uint64 {
    var interval uint64 // in units of 5ns
 
    // if wrapped, add remainder
-   if val < d.last[statElapsed] {
+   if val < d.lastElapsed {
       interval = val + (wrapLimit - val)
    } else {
       interval = val - d.lastElapsed
