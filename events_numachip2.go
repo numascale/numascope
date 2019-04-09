@@ -1,6 +1,7 @@
 package main
 
 import (
+   "fmt"
    "unsafe"
    "golang.org/x/sys/unix"
 )
@@ -14,9 +15,13 @@ type EventsNumachip2 interface {
 type Numachip2 struct {
    regs        *[mapLen / 4]uint32
    stats       *[statsLen / 8]uint64
-   events      []uint16 // index into event list
    last        []uint64
    lastElapsed uint64
+}
+
+type Numaconnect2 struct {
+   cards       []Numachip2
+   events      []uint16 // index into event list
 }
 
 const (
@@ -25,9 +30,10 @@ const (
    statsLen       = 0x590
    venDevId       = 0x07001b47
    venDev         = 0x0000 / 4
-   statCountTotal = 0x3050 / 4
-   statCtrl       = 0x3058 / 4
-   statCounters   = 0x3100 / 4
+   info           = 0x1090 / 4
+   statCountTotal = 0x050 / 4
+   statCtrl       = 0x058 / 4
+   statCounters   = 0x100 / 4
    wrapLimit      = 0xffffffffffff // 48 bits
 
    // stats counters
@@ -166,63 +172,89 @@ var (
    }
 )
 
-func (d *Numachip2) probe() *[]Event {
+func (d *Numaconnect2) probe() *[]Event {
    fd, err := unix.Open("/dev/mem", unix.O_RDWR, 0)
    validate(err)
-   defer unix.Close(fd)
 
    data, err := unix.Mmap(fd, mapBase, mapLen, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED|unix.MAP_FILE)
    validate(err)
+   defer unix.Munmap(data)
 
-   d.regs = (*[mapLen / 4]uint32)(unsafe.Pointer(&data[0]))
-   d.stats = (*[statsLen / 8]uint64)(unsafe.Pointer(&d.regs[statCounters]))
+   regs := (*[mapLen/4]uint32)(unsafe.Pointer(&data[0]))
+   if regs[venDev] != venDevId {
+      return &[]Event{}
+   }
 
-   if d.regs[venDev] == venDevId {
-      return &numachip2Events
+   master := (regs[info+5] >> 4) & 0xfff
+   hts := (regs[info+6] >> 12) & 7
+
+   for pos := master; pos != 0xfff; {
+      base := 0x3f0000000000 | (int64(pos) << 28) | ((23+int64(hts)) << 15)
+
+      data, err := unix.Mmap(fd, base, mapLen, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED|unix.MAP_FILE)
+      validate(err)
+
+      regs := (*[mapLen/4]uint32)(unsafe.Pointer(&data[0]))
+      if regs[venDev] != venDevId {
+         fmt.Printf("vendev %08x\n", regs[venDev])
+         panic("mismatching vendev")
+      }
+
+
+      stats := (*[statsLen / 8]uint64)(unsafe.Pointer(&regs[statCounters]))
+      d.cards = append(d.cards, Numachip2{regs: regs, stats: stats})
+
+      pos = regs[info+6] & 0xfff
    }
 
    return &[]Event{}
 }
 
-func (d *Numachip2) enable(events []uint16) {
+func (d *Numaconnect2) enable(events []uint16) {
    d.events = events
-   d.regs[statCtrl] = 0            // reset block
-   d.regs[statCtrl] = 1 | (1 << 2) // enable counting
 
-   d.last = make([]uint64, len(events))
+   for _, card := range d.cards {
+      card.regs[statCtrl] = 0            // reset block
+      card.regs[statCtrl] = 1 | (1 << 2) // enable counting
+      card.last = make([]uint64, len(events))
+   }
 }
 
-func (d *Numachip2) sample() []uint64 {
+func (d *Numaconnect2) sample() []uint64 {
    samples := make([]uint64, len(d.events))
-   d.regs[statCtrl] = 1 // disable counting
 
-   val := d.stats[statElapsed]
-   var interval uint64 // in units of 5ns
+   for _, card := range d.cards {
+      card.regs[statCtrl] = 1 // disable counting
 
-   // if wrapped, add remainder
-   if val < d.lastElapsed {
-      interval = val + (wrapLimit - val)
-   } else {
-      interval = val - d.lastElapsed
-   }
-
-   d.lastElapsed = val
-
-   for i, offset := range d.events {
-      val = d.stats[numachip2Events[offset].index/8]
-      var delta uint64
+      val := card.stats[statElapsed]
+      var interval uint64 // in units of 5ns
 
       // if wrapped, add remainder
-      if val < d.last[i] {
-         delta = val + (wrapLimit - val)
+      if val < card.lastElapsed {
+         interval = val + (wrapLimit - val)
       } else {
-         delta = val - d.last[i]
+         interval = val - card.lastElapsed
       }
 
-      samples[i] = delta * 200000000 / interval // clockcycles @ 200MHz
-      d.last[i] = val
+      card.lastElapsed = val
+
+      for i, offset := range d.events {
+         val = card.stats[numachip2Events[offset].index/8]
+         var delta uint64
+
+         // if wrapped, add remainder
+         if val < card.last[i] {
+            delta = val + (wrapLimit - val)
+         } else {
+            delta = val - card.last[i]
+         }
+
+         samples[i] = delta * 200000000 / interval // clockcycles @ 200MHz
+         card.last[i] = val
+      }
+
+      card.regs[statCtrl] = 1 | (1 << 2) // reenable counting
    }
 
-   d.regs[statCtrl] = 1 | (1 << 2) // reenable counting
    return samples
 }

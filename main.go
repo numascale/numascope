@@ -38,7 +38,7 @@ func vmxstat() {
    }
 
 //   dev := &Vmstat{}
-   dev := &Numachip2{}
+   dev := &Numaconnect2{}
    supported := dev.probe()
 
    if *list {
