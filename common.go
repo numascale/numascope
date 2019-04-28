@@ -1,10 +1,11 @@
 package main
 
-type Events interface {
-   probe() bool
-   enable([]uint16)
-   sample() []uint32
-}
+import (
+   "os"
+   "fmt"
+   "path"
+   "runtime"
+)
 
 type Event struct {
    index int16 // -1 means unindexed
@@ -13,3 +14,24 @@ type Event struct {
    desc string
 }
 
+type Sensor interface {
+   probe() bool
+   supported() *[]Event
+   enable([]uint16)
+   sample() []uint64
+}
+
+type Reading struct {
+   timestamp uint64 // nanoseconds
+   val       uint64
+}
+
+// Checks if an error occurred
+func validate(err error) {
+   if err != nil {
+      _, file, line, _ := runtime.Caller(1)
+      _, leaf := path.Split(file)
+      fmt.Printf("Failed with '%v' at %v:%v\n", err, leaf, line)
+      os.Exit(1)
+   }
+}

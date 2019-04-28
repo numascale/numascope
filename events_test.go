@@ -7,7 +7,7 @@ import (
 
 func TestMain(m *testing.M) {
    fmt.Println("TestMain")
-   dev := &Numachip2{}
+   dev := &Numaconnect2{}
 
    if dev.probe() {
       dev.enable([]uint16{0x68, 0x80})

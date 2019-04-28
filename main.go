@@ -10,9 +10,9 @@ import (
    "strings"
 )
 
-type Reading struct {
-   timestamp uint64 // nanoseconds
-   val       uint64
+type Present struct {
+   sensor Sensor
+   mnemonics []string
 }
 
 const (
@@ -37,16 +37,30 @@ func vmxstat() {
       os.Exit(1)
    }
 
-//   dev := &Vmstat{}
-   dev := &Numaconnect2{}
-   supported := dev.probe()
+   sensors := []Present{
+      {sensor: &Kernel{}},
+      {sensor: &Numaconnect2{}},
+   }
+
+   // remove any sensors where probe fails
+   for i := len(sensors)-1; i >= 0; i-- {
+      if !sensors[i].sensor.probe() {
+         sensors = append(sensors[:i], sensors[i+1:]...)
+      }
+   }
+
+   if *debug {
+      fmt.Printf("detected %v\n", sensors)
+   }
 
    if *list {
       fmt.Printf("events supported:\n")
 
-      for _, val := range *supported {
-         if *advanced || !val.advanced {
-            fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
+      for _, sensor := range sensors {
+         for _, val := range *sensor.sensor.supported() {
+            if *advanced || !val.advanced {
+               fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
+            }
          }
       }
 
@@ -55,17 +69,23 @@ func vmxstat() {
 
    delay := time.Duration(interval) * time.Second
    elems := strings.Split(*events, ",")
-   var enabled []uint16
 
-   for _, elem := range elems {
-      for j, val := range *supported {
-         if val.mnemonic == elem {
-            enabled = append(enabled, uint16(j))
+   // build a list of enabled events, storing index
+   for i, _ := range sensors {
+      var enabled []uint16
+
+      for _, elem := range elems {
+         for j, val := range *sensors[i].sensor.supported() {
+            if val.mnemonic == elem {
+               enabled = append(enabled, uint16(j))
+               sensors[i].mnemonics = append(sensors[i].mnemonics, elem)
+            }
          }
       }
+
+      sensors[i].sensor.enable(enabled)
    }
 
-   dev.enable(enabled)
    line := 0
 
    for {
@@ -73,17 +93,21 @@ func vmxstat() {
 
       // print column headings
       if line == 0 {
-         for _, val := range enabled {
-            fmt.Printf("%s ", (*supported)[val].mnemonic)
+         for _, sensor := range sensors {
+            for _, mnemonic := range sensor.mnemonics {
+               fmt.Printf("%s ", mnemonic)
+            }
          }
          fmt.Println("")
       }
       line = (line + 1) % 25
 
-      samples := dev.sample()
-      for i, _ := range samples {
-         name := (*supported)[enabled[i]].mnemonic
-         fmt.Printf("%*d ", len(name), samples[i])
+      for _, sensor := range sensors {
+         samples := sensor.sensor.sample()
+
+         for i, mnemonic := range sensor.mnemonics {
+            fmt.Printf("%*d ", len(mnemonic), samples[i])
+         }
       }
       fmt.Println("")
 

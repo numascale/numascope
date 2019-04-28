@@ -6,12 +6,6 @@ import (
    "golang.org/x/sys/unix"
 )
 
-type EventsNumachip2 interface {
-   probe() bool
-   enable([]uint16)
-   sample() []uint64
-}
-
 type Numachip2 struct {
    regs        *[mapLen / 4]uint32
    stats       *[statsLen / 8]uint64
@@ -172,7 +166,7 @@ var (
    }
 )
 
-func (d *Numaconnect2) probe() *[]Event {
+func (d *Numaconnect2) probe() bool {
    fd, err := unix.Open("/dev/mem", unix.O_RDWR, 0)
    validate(err)
 
@@ -182,7 +176,7 @@ func (d *Numaconnect2) probe() *[]Event {
 
    regs := (*[mapLen/4]uint32)(unsafe.Pointer(&data[0]))
    if regs[venDev] != venDevId {
-      return &[]Event{}
+      return false
    }
 
    master := (regs[info+5] >> 4) & 0xfff
@@ -207,7 +201,11 @@ func (d *Numaconnect2) probe() *[]Event {
       pos = regs[info+6] & 0xfff
    }
 
-   return &[]Event{}
+   return true
+}
+
+func (d *Numaconnect2) supported() *[]Event {
+   return &numachip2Events
 }
 
 func (d *Numaconnect2) enable(events []uint16) {
