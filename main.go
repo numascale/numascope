@@ -96,6 +96,11 @@ func vmxstat() {
 func main() {
    flag.Parse()
 
+   if os.Getuid() != 0 {
+      fmt.Println("please run with sudo/root")
+      os.Exit(1)
+   }
+
    exe := path.Base(os.Args[0])
    if exe == "vmxstat" {
       vmxstat()
