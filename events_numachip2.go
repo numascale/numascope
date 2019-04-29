@@ -25,9 +25,9 @@ const (
    venDevId       = 0x07001b47
    venDev         = 0x0000 / 4
    info           = 0x1090 / 4
-   statCountTotal = 0x050 / 4
-   statCtrl       = 0x058 / 4
-   statCounters   = 0x100 / 4
+   statCountTotal = 0x3050 / 4
+   statCtrl       = 0x3058 / 4
+   statCounters   = 0x3100 / 4
    wrapLimit      = 0xffffffffffff // 48 bits
 
    // stats counters
@@ -194,7 +194,6 @@ func (d *Numaconnect2) probe() bool {
          panic("mismatching vendev")
       }
 
-
       stats := (*[statsLen / 8]uint64)(unsafe.Pointer(&regs[statCounters]))
       d.cards = append(d.cards, Numachip2{regs: regs, stats: stats})
 
@@ -211,47 +210,47 @@ func (d *Numaconnect2) supported() *[]Event {
 func (d *Numaconnect2) enable(events []uint16) {
    d.events = events
 
-   for _, card := range d.cards {
-      card.regs[statCtrl] = 0            // reset block
-      card.regs[statCtrl] = 1 | (1 << 2) // enable counting
-      card.last = make([]uint64, len(events))
+   for i := range d.cards {
+      d.cards[i].regs[statCtrl] = 0            // reset block
+      d.cards[i].regs[statCtrl] = 1 | (1 << 2) // enable counting
+      d.cards[i].last = make([]uint64, len(events))
    }
 }
 
 func (d *Numaconnect2) sample() []uint64 {
    samples := make([]uint64, len(d.events))
 
-   for _, card := range d.cards {
-      card.regs[statCtrl] = 1 // disable counting
+   for n := range d.cards {
+      d.cards[n].regs[statCtrl] = 1 // disable counting
 
-      val := card.stats[statElapsed]
+      val := d.cards[n].stats[statElapsed]
       var interval uint64 // in units of 5ns
 
       // if wrapped, add remainder
-      if val < card.lastElapsed {
+      if val < d.cards[n].lastElapsed {
          interval = val + (wrapLimit - val)
       } else {
-         interval = val - card.lastElapsed
+         interval = val - d.cards[n].lastElapsed
       }
 
-      card.lastElapsed = val
+      d.cards[n].lastElapsed = val
 
       for i, offset := range d.events {
-         val = card.stats[numachip2Events[offset].index/8]
+         val = d.cards[n].stats[numachip2Events[offset].index/8]
          var delta uint64
 
          // if wrapped, add remainder
-         if val < card.last[i] {
+         if val < d.cards[n].last[i] {
             delta = val + (wrapLimit - val)
          } else {
-            delta = val - card.last[i]
+            delta = val - d.cards[n].last[i]
          }
 
          samples[i] = delta * 200000000 / interval // clockcycles @ 200MHz
-         card.last[i] = val
+         d.cards[n].last[i] = val
       }
 
-      card.regs[statCtrl] = 1 | (1 << 2) // reenable counting
+      d.cards[n].regs[statCtrl] = 1 | (1 << 2) // reenable counting
    }
 
    return samples

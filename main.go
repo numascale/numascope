@@ -69,6 +69,7 @@ func vmxstat() {
 
    delay := time.Duration(interval) * time.Second
    elems := strings.Split(*events, ",")
+   total := 0
 
    // build a list of enabled events, storing index
    for i, _ := range sensors {
@@ -79,11 +80,17 @@ func vmxstat() {
             if val.mnemonic == elem {
                enabled = append(enabled, uint16(j))
                sensors[i].mnemonics = append(sensors[i].mnemonics, elem)
+               total++
             }
          }
       }
 
       sensors[i].sensor.enable(enabled)
+   }
+
+   if total == 0 {
+      fmt.Println("no matching events")
+      os.Exit(0)
    }
 
    line := 0
@@ -104,6 +111,9 @@ func vmxstat() {
 
       for _, sensor := range sensors {
          samples := sensor.sensor.sample()
+         if len(samples) != len(sensor.mnemonics) {
+            panic("internal error")
+         }
 
          for i, mnemonic := range sensor.mnemonics {
             fmt.Printf("%*d ", len(mnemonic), samples[i])
