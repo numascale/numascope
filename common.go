@@ -9,7 +9,7 @@ import (
 
 type Event struct {
    index int16 // -1 means unindexed
-   advanced bool
+//   advanced bool
    mnemonic string
    desc string
 }

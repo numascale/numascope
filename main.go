@@ -20,7 +20,8 @@ const (
 )
 
 var (
-   advanced   = flag.Bool("advanced", false, "list all events")
+// TODO enable advanced when there is useful discrimitation
+//   advanced   = flag.Bool("advanced", false, "list all events")
    listenAddr = flag.String("listenAddr", "localhost:8080", "HTTP service listen address")
    debug      = flag.Bool("debug", false, "print debugging output")
    events     = flag.String("events", "pgfault,pgmajfault,numa_hit,numa_miss,numa_foreign,numa_local,numa_other", "comma-separated list of events")
@@ -58,9 +59,9 @@ func vmxstat() {
 
       for _, sensor := range sensors {
          for _, val := range *sensor.sensor.supported() {
-            if *advanced || !val.advanced {
+//            if *advanced || !val.advanced {
                fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
-            }
+//            }
          }
       }
 
