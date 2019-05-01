@@ -16,6 +16,7 @@ type Numachip2 struct {
 type Numaconnect2 struct {
    cards       []Numachip2
    events      []uint16 // index into event list
+   discrete    bool
 }
 
 const (
@@ -166,7 +167,7 @@ var (
    }
 )
 
-func (d *Numaconnect2) probe() bool {
+func (d *Numaconnect2) probe() uint {
    fd, err := unix.Open("/dev/mem", unix.O_RDWR, 0)
    validate(err)
 
@@ -176,7 +177,7 @@ func (d *Numaconnect2) probe() bool {
 
    regs := (*[mapLen/4]uint32)(unsafe.Pointer(&data[0]))
    if regs[venDev] != venDevId {
-      return false
+      return 0
    }
 
    master := (regs[info+5] >> 4) & 0xfff
@@ -200,15 +201,16 @@ func (d *Numaconnect2) probe() bool {
       pos = regs[info+6] & 0xfff
    }
 
-   return true
+   return uint(len(d.cards))
 }
 
 func (d *Numaconnect2) supported() *[]Event {
    return &numachip2Events
 }
 
-func (d *Numaconnect2) enable(events []uint16) {
+func (d *Numaconnect2) enable(events []uint16, discrete bool) {
    d.events = events
+   d.discrete = discrete
 
    for i := range d.cards {
       d.cards[i].regs[statCtrl] = 0            // reset block
@@ -218,7 +220,13 @@ func (d *Numaconnect2) enable(events []uint16) {
 }
 
 func (d *Numaconnect2) sample() []uint64 {
-   samples := make([]uint64, len(d.events))
+   var samples []uint64
+
+   if d.discrete {
+      samples = make([]uint64, len(d.events) * len(d.cards))
+   } else {
+      samples = make([]uint64, len(d.events))
+   }
 
    for n := range d.cards {
       d.cards[n].regs[statCtrl] = 1 // disable counting
@@ -246,11 +254,25 @@ func (d *Numaconnect2) sample() []uint64 {
             delta = val - d.cards[n].last[i]
          }
 
-         samples[i] = delta * 200000000 / interval // clockcycles @ 200MHz
-         d.cards[n].last[i] = val
+         sample := delta * 200000000 / interval // clockcycles @ 200MHz
+
+         if d.discrete {
+            samples[n*len(d.events)+i] = sample
+         } else {
+            // sum totals for average
+            samples[i] += sample
+            d.cards[n].last[i] = val
+         }
       }
 
       d.cards[n].regs[statCtrl] = 1 | (1 << 2) // reenable counting
+   }
+
+   if !d.discrete {
+      // divide through for average
+      for i := range d.events {
+         samples[i] /= uint64(len(d.cards))
+      }
    }
 
    return samples

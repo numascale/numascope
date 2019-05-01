@@ -15,9 +15,9 @@ type Event struct {
 }
 
 type Sensor interface {
-   probe() bool
+   probe() uint
    supported() *[]Event
-   enable([]uint16)
+   enable([]uint16, bool)
    sample() []uint64
 }
 

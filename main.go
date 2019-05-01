@@ -12,6 +12,7 @@ import (
 
 type Present struct {
    sensor Sensor
+   units int
    mnemonics []string
 }
 
@@ -26,6 +27,7 @@ var (
    debug      = flag.Bool("debug", false, "print debugging output")
    events     = flag.String("events", "pgfault,pgmajfault,numa_hit,numa_miss,numa_foreign,numa_local,numa_other", "comma-separated list of events")
    list       = flag.Bool("list", false, "list detected events")
+   discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
    interval   = 1
 )
 
@@ -45,7 +47,9 @@ func vmxstat() {
 
    // remove any sensors where probe fails
    for i := len(sensors)-1; i >= 0; i-- {
-      if !sensors[i].sensor.probe() {
+      sensors[i].units = int(sensors[i].sensor.probe())
+
+      if sensors[i].units == 0 {
          sensors = append(sensors[:i], sensors[i+1:]...)
       }
    }
@@ -86,7 +90,7 @@ func vmxstat() {
          }
       }
 
-      sensors[i].sensor.enable(enabled)
+      sensors[i].sensor.enable(enabled, *discrete)
    }
 
    if total == 0 {
@@ -103,7 +107,13 @@ func vmxstat() {
       if line == 0 {
          for _, sensor := range sensors {
             for _, mnemonic := range sensor.mnemonics {
-               fmt.Printf("%s ", mnemonic)
+               if *discrete {
+                  for unit := 0; unit < sensor.units; unit++ {
+                     fmt.Printf("%s:%d ", mnemonic, unit)
+                  }
+               } else {
+                  fmt.Printf("%s ", mnemonic)
+               }
             }
          }
          fmt.Println("")
@@ -112,12 +122,15 @@ func vmxstat() {
 
       for _, sensor := range sensors {
          samples := sensor.sensor.sample()
-         if len(samples) != len(sensor.mnemonics) {
-            panic("internal error")
-         }
 
          for i, mnemonic := range sensor.mnemonics {
-            fmt.Printf("%*d ", len(mnemonic), samples[i])
+            if *discrete {
+               for unit := 0; unit < sensor.units; unit++ {
+                  fmt.Printf("%*d ", len(mnemonic)+2, samples[i*len(sensor.mnemonics)+unit])
+               }
+            } else {
+               fmt.Printf("%*d ", len(mnemonic), samples[i])
+            }
          }
       }
       fmt.Println("")
