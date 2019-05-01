@@ -23,10 +23,10 @@ const (
 var (
 // TODO enable advanced when there is useful discrimitation
 //   advanced   = flag.Bool("advanced", false, "list all events")
-   listenAddr = flag.String("listenAddr", "localhost:8080", "HTTP service listen address")
+   listenAddr = flag.String("listenAddr", "localhost:80", "web service listen address and port")
    debug      = flag.Bool("debug", false, "print debugging output")
    events     = flag.String("events", "pgfault,pgmajfault,numa_hit,numa_miss,numa_foreign,numa_local,numa_other", "comma-separated list of events")
-   list       = flag.Bool("list", false, "list detected events")
+   list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
    interval   = 1
 )
