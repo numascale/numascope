@@ -29,29 +29,27 @@ var (
    list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
    interval   = 1
+   sensors    = []Present{
+      {sensor: &Kernel{}},
+      {sensor: &Numaconnect2{}},
+   }
 )
+
+func usage() {
+   fmt.Println("usage: vmxstat [interval]")
+   os.Exit(1)
+}
 
 func vmxstat() {
    switch {
    case flag.NArg() == 1:
-      interval, _ = strconv.Atoi(flag.Arg(0))
-   case flag.NArg() > 1:
-      fmt.Println("usage: vmxstat [interval]")
-      os.Exit(1)
-   }
-
-   sensors := []Present{
-      {sensor: &Kernel{}},
-      {sensor: &Numaconnect2{}},
-   }
-
-   // remove any sensors where probe fails
-   for i := len(sensors)-1; i >= 0; i-- {
-      sensors[i].units = int(sensors[i].sensor.probe())
-
-      if sensors[i].units == 0 {
-         sensors = append(sensors[:i], sensors[i+1:]...)
+      var err error
+      interval, err = strconv.Atoi(flag.Arg(0))
+      if err != nil {
+         usage()
       }
+   case flag.NArg() > 1:
+      usage()
    }
 
    if *debug {
@@ -149,10 +147,25 @@ func main() {
       os.Exit(1)
    }
 
+   // remove any sensors where probe fails
+   for i := len(sensors)-1; i >= 0; i-- {
+      sensors[i].units = int(sensors[i].sensor.probe())
+
+      if sensors[i].units == 0 {
+         sensors = append(sensors[:i], sensors[i+1:]...)
+      }
+   }
+
    exe := path.Base(os.Args[0])
    if exe == "vmxstat" {
       vmxstat()
+      os.Exit(0)
    }
 
-   // FIXME for numascope
+   initweb(*listenAddr)
+
+   for {
+      time.Sleep(time.Duration(interval) * time.Second)
+//      fmt.Println("update")
+   }
 }

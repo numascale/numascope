@@ -1,24 +1,20 @@
 package main
 
 import (
-   //   "html/template"
-   "encoding/json"
    "fmt"
-   "github.com/gorilla/websocket"
    "log"
-   "math/rand"
    "net/http"
-   "time"
+   "github.com/gorilla/websocket"
 )
 
 var (
-   upgrader = websocket.Upgrader{} // use default options
+   upgrader = websocket.Upgrader{}
+   connections []*websocket.Conn
 )
 
-type Message struct {
-   DeviceID    string
-   State       string
-   Temperature int
+type SignonMessage struct {
+   Interval int
+   Tree     []map[string][]string
 }
 
 func monitor(w http.ResponseWriter, r *http.Request) {
@@ -31,11 +27,12 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    defer c.Close()
 
    // handshake
-   msgType, message, err := c.ReadMessage()
+   _, message, err := c.ReadMessage()
    if err != nil {
       log.Println("read:", err)
       return
    }
+
    if string(message) != "463ba1974b06" {
       log.Println("auth failed")
       return
@@ -43,24 +40,29 @@ func monitor(w http.ResponseWriter, r *http.Request) {
 
    log.Println("auth succeeded")
 
+   msg := SignonMessage{Interval: interval, Tree: make([]map[string][]string, len(sensors))}
+
+   for i, sensor := range sensors {
+      msg.Tree[i] = make(map[string][]string)
+      name := sensor.sensor.name()
+      supported := *sensor.sensor.supported()
+
+      msg.Tree[i][name] = make([]string, len(supported))
+
+      for j, val := range supported {
+         msg.Tree[i][name][j] = val.desc
+      }
+   }
+
+   err = c.WriteJSON(&msg)
+   if err != nil {
+      log.Println("write:", err)
+      return
+   }
+
+   connections = append(connections, c)
+
    for {
-      t := int(rand.Float32() * 70)
-      message := Message{"device1234", "sleeping", t}
-
-      bytes, err := json.Marshal(message)
-      if err != nil {
-         log.Println("marshall:", err)
-         break
-      }
-
-      err = c.WriteMessage(msgType, bytes)
-      if err != nil {
-         log.Println("write:", err)
-         break
-      }
-
-      // log.Println("wrote")
-      time.Sleep(1000 * time.Millisecond)
    }
 }
 
