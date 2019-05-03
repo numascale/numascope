@@ -148,6 +148,10 @@ func (d *Kernel) probe() uint {
    return 1
 }
 
+func (d *Kernel) name() string {
+   return "Kernel"
+}
+
 func (d *Kernel) supported() *[]Event {
    return &kernelEvents
 }

@@ -167,6 +167,10 @@ var (
    }
 )
 
+func (d *Numaconnect2) name() string {
+   return "NumaConnect2"
+}
+
 func (d *Numaconnect2) probe() uint {
    fd, err := unix.Open("/dev/mem", unix.O_RDWR, 0)
    validate(err)

@@ -70,5 +70,5 @@ func initweb(addr string) {
    http.HandleFunc("/monitor", monitor)
 
    go http.ListenAndServe(addr, nil)
-   fmt.Printf("Interface available at http://%v\n", addr)
+   fmt.Printf("interface available at http://%v\n", addr)
 }

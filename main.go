@@ -59,9 +59,9 @@ func vmxstat() {
    }
 
    if *list {
-      fmt.Printf("events supported:\n")
-
       for _, sensor := range sensors {
+         fmt.Printf("%s events:\n", sensor.sensor.name())
+
          for _, val := range *sensor.sensor.supported() {
 //            if *advanced || !val.advanced {
                fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
