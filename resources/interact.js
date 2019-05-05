@@ -61,7 +61,7 @@ function signon(data) {
             var btn = document.createElement('button')
             var text = document.createTextNode(elems[j]);
             btn.appendChild(text);
-            btn.className = 'btn btn-default';
+            btn.className = 'btn btn-light btn-sm m-1';
             buttons.appendChild(btn);
          }
 
@@ -89,7 +89,11 @@ ws.onmessage = function(e) {
 
       // FIXME don't iterate sensor headings
       for (let btn of buttons.childNodes) {
-         btn.className = data.includes(btn.firstChild.nodeValue) ? 'btn btn-primary' : 'btn';
+         if (!btn.className.startsWith('btn')) {
+            continue;
+         }
+
+         btn.className = data.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1';
       }
    }
 }
