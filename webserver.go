@@ -33,9 +33,21 @@ func update(samples *[]uint64) {
    for _, c := range connections {
       err := c.WriteJSON(samples)
       if err != nil {
-         panic("failed writing")
+         fmt.Println("failed writing: ", err)
       }
    }
+}
+
+func remove(c *websocket.Conn) {
+   for i := range connections {
+      if connections[i] == c {
+         connections[i] = connections[len(connections)-1]
+         connections = connections[:len(connections)-1]
+         return
+      }
+   }
+
+   panic("element not found")
 }
 
 func monitor(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +100,9 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       var msg string
       err := c.ReadJSON(&msg)
       if err != nil {
-         panic("failed reading")
+         fmt.Println("failed reading:", err)
+         remove(c)
+         break
       }
 
       fmt.Printf("recv %+v\n", msg)
