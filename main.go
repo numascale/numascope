@@ -13,7 +13,7 @@ import (
 type Present struct {
    sensor Sensor
    units int
-   mnemonics []string
+   enabled []*Event
 }
 
 const (
@@ -71,31 +71,6 @@ func vmxstat() {
    }
 
    delay := time.Duration(interval) * time.Second
-   elems := strings.Split(*events, ",")
-   total := 0
-
-   // build a list of enabled events, storing index
-   for i, _ := range sensors {
-      var enabled []uint16
-
-      for _, elem := range elems {
-         for j, val := range *sensors[i].sensor.supported() {
-            if val.mnemonic == elem {
-               enabled = append(enabled, uint16(j))
-               sensors[i].mnemonics = append(sensors[i].mnemonics, elem)
-               total++
-            }
-         }
-      }
-
-      sensors[i].sensor.enable(enabled, *discrete)
-   }
-
-   if total == 0 {
-      fmt.Println("no matching events")
-      os.Exit(0)
-   }
-
    line := 0
 
    for {
@@ -104,13 +79,13 @@ func vmxstat() {
       // print column headings
       if line == 0 {
          for _, sensor := range sensors {
-            for _, mnemonic := range sensor.mnemonics {
+            for _, event := range sensor.enabled {
                if *discrete {
                   for unit := 0; unit < sensor.units; unit++ {
-                     fmt.Printf("%s:%d ", mnemonic, unit)
+                     fmt.Printf("%s:%d ", event.mnemonic, unit)
                   }
                } else {
-                  fmt.Printf("%s ", mnemonic)
+                  fmt.Printf("%s ", event.mnemonic)
                }
             }
          }
@@ -121,13 +96,13 @@ func vmxstat() {
       for _, sensor := range sensors {
          samples := sensor.sensor.sample()
 
-         for i, mnemonic := range sensor.mnemonics {
+         for i, event := range sensor.enabled {
             if *discrete {
                for unit := 0; unit < sensor.units; unit++ {
-                  fmt.Printf("%*d ", len(mnemonic)+2, samples[i*len(sensor.mnemonics)+unit])
+                  fmt.Printf("%*d ", len(event.mnemonic)+2, samples[i*len(sensor.enabled)+unit])
                }
             } else {
-               fmt.Printf("%*d ", len(mnemonic), samples[i])
+               fmt.Printf("%*d ", len(event.mnemonic), samples[i])
             }
          }
       }
@@ -154,6 +129,33 @@ func main() {
       if sensors[i].units == 0 {
          sensors = append(sensors[:i], sensors[i+1:]...)
       }
+   }
+
+   elems := strings.Split(*events, ",")
+   total := 0
+
+   // build a list of enabled events, storing pointer to event struct
+   for i := range sensors {
+      var enabled []uint16
+
+      for _, elem := range elems {
+         supported := *sensors[i].sensor.supported()
+
+         for j := range supported {
+            if supported[j].mnemonic == elem {
+               enabled = append(enabled, uint16(j))
+               sensors[i].enabled = append(sensors[i].enabled, &supported[j])
+               total++
+            }
+         }
+      }
+
+      sensors[i].sensor.enable(enabled, *discrete)
+   }
+
+   if total == 0 {
+      fmt.Println("no matching events")
+      os.Exit(0)
    }
 
    exe := path.Base(os.Args[0])

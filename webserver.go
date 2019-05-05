@@ -17,6 +17,18 @@ type SignonMessage struct {
    Tree     []map[string][]string
 }
 
+func change(c *websocket.Conn) {
+   enabled := []string{"enabled"}
+
+   for _, sensor := range sensors {
+      for _, elem := range sensor.enabled {
+         enabled = append(enabled, elem.desc)
+      }
+   }
+
+   c.WriteJSON(&enabled)
+}
+
 func monitor(w http.ResponseWriter, r *http.Request) {
    c, err := upgrader.Upgrade(w, r, nil)
    if err != nil {
@@ -60,6 +72,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       return
    }
 
+   change(c);
    connections = append(connections, c)
 
    for {

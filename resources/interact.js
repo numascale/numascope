@@ -41,43 +41,56 @@ var interval = setInterval(function() {
 
 const ws = new WebSocket('ws://'+location.host+'/monitor');
 var signedon = false;
-var xyz;
+var buttons;
 
 function signon(data) {
-xyz=data;
-
    for (var i = 0; i < data["Tree"].length; i++) {
       for (var key in data["Tree"][i]) {
          if (!data["Tree"][i].hasOwnProperty(key))
             continue;
 
-         let elem = document.createElement('details');
+         buttons = document.createElement('details');
          var node = document.createElement('summary');
-         elem.appendChild(node);
-         var text = document.createTextNode(key);
+         buttons.appendChild(node);
+         var text = document.createTextNode(key+' events');
          node.appendChild(text);
 
          elems = data["Tree"][i][key];
+
          for (var j in elems) {
-            var para = document.createElement("p");
+            var btn = document.createElement('button')
             var text = document.createTextNode(elems[j]);
-            para.appendChild(text);
-            elem.appendChild(para);
+            btn.appendChild(text);
+            btn.className = 'btn btn-default';
+            buttons.appendChild(btn);
          }
 
          let container = document.querySelector("#events");
-         container.appendChild(elem);
+         container.appendChild(buttons);
       }
    }
-
-   signon = true;
 }
 
 ws.onmessage = function(e) {
-//   console.log('recv '+e.data);
+   var data = JSON.parse(e.data);
 
    if (signedon == false) {
-      signon(JSON.parse(e.data))
+      signon(data);
+      signedon = true;
+      return;
+   }
+
+   console.log('recv: '+JSON.stringify(data, null, 2));
+
+   // handle enabled updates
+   if (data[0] == 'enabled') {
+      // drop 'enabled' element
+      data.shift();
+
+      // FIXME don't iterate sensor headings
+      for (let btn of buttons.childNodes) {
+         btn.className = data.includes(btn.firstChild.nodeValue) ? 'btn btn-primary' : 'btn';
+      }
    }
 }
 
