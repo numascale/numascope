@@ -2,46 +2,44 @@ function rand() {
   return Math.random();
 }
 
-var time = new Date();
-
-var data = [{
-  x: [time],
-  y: [rand],
-  mode: 'lines',
-  line: {color: '#80CAF6'}
-}]
-
-Plotly.plot('graph', data);
-
-var cnt = 0;
-
-var interval = setInterval(function() {
-  var time = new Date();
-
-  var update = {
-  x:  [[time]],
-  y: [[rand()]]
-  }
-
-  var olderTime = time.setMinutes(time.getMinutes() - 1);
-  var futureTime = time.setMinutes(time.getMinutes() + 1);
-
-  var minuteView = {
-        xaxis: {
-          type: 'date',
-          range: [olderTime,futureTime]
-        }
-      };
-
-  Plotly.relayout('graph', minuteView);
-  Plotly.extendTraces('graph', update, [0])
-
-  if(cnt === 100) clearInterval(interval);
-}, 1000);
-
 const ws = new WebSocket('ws://'+location.host+'/monitor');
 var signedon = false;
 var buttons;
+
+function graph() {
+   var time = new Date();
+
+   var data = [{
+     x: [time],
+     y: [rand],
+     mode: 'lines',
+     line: {color: '#80CAF6'}
+   }]
+
+   Plotly.plot('graph', data);
+}
+
+function update() {
+   var time = new Date();
+
+   var update = {
+      x:  [[time]],
+      y: [[rand()]]
+   }
+
+   var olderTime = time.setMinutes(time.getMinutes() - 1);
+   var futureTime = time.setMinutes(time.getMinutes() + 1);
+
+   var minuteView = {
+      xaxis: {
+         type: 'date',
+         range: [olderTime,futureTime]
+      }
+   };
+
+   Plotly.relayout('graph', minuteView);
+   Plotly.extendTraces('graph', update, [0])
+}
 
 function signon(data) {
    for (var i = 0; i < data["Tree"].length; i++) {
@@ -80,14 +78,11 @@ ws.onmessage = function(e) {
       return;
    }
 
-   console.log('recv: '+JSON.stringify(data, null, 2));
-
    // handle enabled updates
    if (data[0] == 'enabled') {
       // drop 'enabled' element
       data.shift();
 
-      // FIXME don't iterate sensor headings
       for (let btn of buttons.childNodes) {
          if (!btn.className.startsWith('btn')) {
             continue;
@@ -95,7 +90,13 @@ ws.onmessage = function(e) {
 
          btn.className = data.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1';
       }
+
+      graph();
+      return;
    }
+
+   console.log('recv: '+JSON.stringify(data, null, 2));
+   update();
 }
 
 ws.onopen = function(e) {

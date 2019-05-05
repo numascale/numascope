@@ -106,7 +106,7 @@ func vmxstat() {
             }
          }
       }
-      fmt.Println("")
+      fmt.Println()
 
       if flag.NArg() == 0 {
          break
@@ -168,6 +168,12 @@ func main() {
 
    for {
       time.Sleep(time.Duration(interval) * time.Second)
-//      fmt.Println("update")
+      samples := []uint64{uint64(time.Now().Unix())}
+
+      for _, sensor := range sensors {
+         samples = append(samples, sensor.sensor.sample()...)
+      }
+
+      update(&samples)
    }
 }

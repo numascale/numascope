@@ -29,6 +29,15 @@ func change(c *websocket.Conn) {
    c.WriteJSON(&enabled)
 }
 
+func update(samples *[]uint64) {
+   for _, c := range connections {
+      err := c.WriteJSON(samples)
+      if err != nil {
+         panic("failed writing")
+      }
+   }
+}
+
 func monitor(w http.ResponseWriter, r *http.Request) {
    c, err := upgrader.Upgrade(w, r, nil)
    if err != nil {
@@ -76,6 +85,13 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    connections = append(connections, c)
 
    for {
+      var msg string
+      err := c.ReadJSON(&msg)
+      if err != nil {
+         panic("failed reading")
+      }
+
+      fmt.Printf("recv %+v\n", msg)
    }
 }
 
