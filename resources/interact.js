@@ -3,34 +3,42 @@ function rand() {
 }
 
 const ws = new WebSocket('ws://'+location.host+'/monitor');
-var signedon = false;
-var buttons;
+let signedon = false;
+let buttons;
 
-function graph() {
-   var time = new Date();
+function graph(headings) {
+   let data = [];
 
-   var data = [{
-     x: [time],
-     y: [rand],
-     mode: 'lines',
-     line: {color: '#80CAF6'}
-   }]
-
-   Plotly.plot('graph', data);
-}
-
-function update() {
-   var time = new Date();
-
-   var update = {
-      x:  [[time]],
-      y: [[rand()]]
+   for (const heading of headings) {
+      data.push({
+         name: heading,
+         mode: 'lines',
+         x: [0],
+         y: [0]
+      });
    }
 
-   var olderTime = time.setMinutes(time.getMinutes() - 1);
-   var futureTime = time.setMinutes(time.getMinutes() + 1);
+   const layout = {
+      yaxis: {
+         title: 'events'
+      }
+   }
 
-   var minuteView = {
+   Plotly.react('graph', data, layout);
+}
+
+function update(data) {
+   let time = new Date();
+
+   let update = {
+      x: [[time]],
+      y: [[rand()]]
+      }
+
+   let olderTime = time.setMinutes(time.getMinutes() - 1);
+   let futureTime = time.setMinutes(time.getMinutes() + 1);
+
+   let minuteView = {
       xaxis: {
          type: 'date',
          range: [olderTime,futureTime]
@@ -42,22 +50,22 @@ function update() {
 }
 
 function signon(data) {
-   for (var i = 0; i < data["Tree"].length; i++) {
-      for (var key in data["Tree"][i]) {
+   for (let i = 0; i < data["Tree"].length; i++) {
+      for (const key in data["Tree"][i]) {
          if (!data["Tree"][i].hasOwnProperty(key))
             continue;
 
          buttons = document.createElement('details');
-         var node = document.createElement('summary');
+         let node = document.createElement('summary');
          buttons.appendChild(node);
-         var text = document.createTextNode(key+' events');
+         let text = document.createTextNode(key+' events');
          node.appendChild(text);
 
          elems = data["Tree"][i][key];
 
-         for (var j in elems) {
-            var btn = document.createElement('button')
-            var text = document.createTextNode(elems[j]);
+         for (const elem of elems) {
+            let btn = document.createElement('button')
+            let text = document.createTextNode(elem);
             btn.appendChild(text);
             btn.className = 'btn btn-light btn-sm m-1';
             buttons.appendChild(btn);
@@ -70,7 +78,7 @@ function signon(data) {
 }
 
 ws.onmessage = function(e) {
-   var data = JSON.parse(e.data);
+   let data = JSON.parse(e.data);
 
    if (signedon == false) {
       signon(data);
@@ -91,12 +99,12 @@ ws.onmessage = function(e) {
          btn.className = data.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1';
       }
 
-      graph();
+      graph(data);
       return;
    }
 
    console.log('recv: '+JSON.stringify(data, null, 2));
-   update();
+   update(data);
 }
 
 ws.onopen = function(e) {
