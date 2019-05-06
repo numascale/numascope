@@ -2,7 +2,6 @@ package main
 
 import (
    "fmt"
-   "log"
    "net/http"
    "github.com/gorilla/websocket"
 )
@@ -32,7 +31,7 @@ func change(c *websocket.Conn) {
 func update(samples *[]uint64) {
    for _, c := range connections {
       err := c.WriteJSON(samples)
-      if err != nil {
+      if err != nil && *debug {
          fmt.Println("failed writing: ", err)
       }
    }
@@ -53,7 +52,9 @@ func remove(c *websocket.Conn) {
 func monitor(w http.ResponseWriter, r *http.Request) {
    c, err := upgrader.Upgrade(w, r, nil)
    if err != nil {
-      log.Print("upgrade:", err)
+      if *debug {
+         fmt.Print("upgrade:", err)
+      }
       return
    }
 
@@ -62,16 +63,22 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    // handshake
    _, message, err := c.ReadMessage()
    if err != nil {
-      log.Println("read:", err)
+      if *debug {
+         fmt.Println("read:", err)
+      }
       return
    }
 
    if string(message) != "463ba1974b06" {
-      log.Println("auth failed")
+      if *debug {
+         fmt.Println("auth failed")
+      }
       return
    }
 
-   log.Println("auth succeeded")
+   if *debug {
+      fmt.Println("auth succeeded")
+   }
 
    msg := SignonMessage{Interval: interval, Tree: make([]map[string][]string, len(sensors))}
 
@@ -89,7 +96,9 @@ func monitor(w http.ResponseWriter, r *http.Request) {
 
    err = c.WriteJSON(&msg)
    if err != nil {
-      log.Println("write:", err)
+      if *debug {
+         fmt.Println("write:", err)
+      }
       return
    }
 
@@ -100,12 +109,16 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       var msg string
       err := c.ReadJSON(&msg)
       if err != nil {
-         fmt.Println("failed reading:", err)
+         if *debug {
+            fmt.Println("failed reading:", err)
+         }
          remove(c)
          break
       }
 
-      fmt.Printf("recv %+v\n", msg)
+      if *debug {
+         fmt.Printf("recv %+v\n", msg)
+      }
    }
 }
 
