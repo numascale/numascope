@@ -168,12 +168,13 @@ func main() {
 
    for {
       time.Sleep(time.Duration(interval) * time.Second)
-      samples := []uint64{uint64(time.Now().Unix())}
+      timestamp := uint64(time.Now().UnixNano() / 1e6)
+      var samples []uint64
 
       for _, sensor := range sensors {
          samples = append(samples, sensor.sensor.sample()...)
       }
 
-      update(&samples)
+      update(timestamp, &samples)
    }
 }

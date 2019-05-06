@@ -2,6 +2,7 @@ package main
 
 import (
    "fmt"
+   "time"
    "net/http"
    "github.com/gorilla/websocket"
 )
@@ -16,21 +17,42 @@ type SignonMessage struct {
    Tree     []map[string][]string
 }
 
+type ChangeMessage struct {
+   Op        string
+   Timestamp uint64
+   Enabled   []string
+}
+
+type UpdateMessage struct {
+   Op        string
+   Timestamp uint64
+   Values    []uint64
+}
+
 func change(c *websocket.Conn) {
-   enabled := []string{"enabled"}
+   msg := ChangeMessage{
+      Op: "enabled",
+      Timestamp: uint64(time.Now().UnixNano() / 1e6),
+   }
 
    for _, sensor := range sensors {
       for _, elem := range sensor.enabled {
-         enabled = append(enabled, elem.desc)
+         msg.Enabled = append(msg.Enabled, elem.desc)
       }
    }
 
-   c.WriteJSON(&enabled)
+   c.WriteJSON(&msg)
 }
 
-func update(samples *[]uint64) {
+func update(timestamp uint64, samples *[]uint64) {
+   msg := UpdateMessage{
+      Op: "update",
+      Timestamp: timestamp,
+      Values: *samples,
+   }
+
    for _, c := range connections {
-      err := c.WriteJSON(samples)
+      err := c.WriteJSON(&msg)
       if err != nil && *debug {
          fmt.Println("failed writing: ", err)
       }
@@ -80,7 +102,10 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       fmt.Println("auth succeeded")
    }
 
-   msg := SignonMessage{Interval: interval, Tree: make([]map[string][]string, len(sensors))}
+   msg := SignonMessage{
+      Interval: interval,
+      Tree: make([]map[string][]string, len(sensors)),
+   }
 
    for i, sensor := range sensors {
       msg.Tree[i] = make(map[string][]string)
@@ -108,6 +133,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    for {
       var msg string
       err := c.ReadJSON(&msg)
+
       if err != nil {
          if *debug {
             fmt.Println("failed reading:", err)

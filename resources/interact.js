@@ -5,22 +5,28 @@ function rand() {
 const ws = new WebSocket('ws://'+location.host+'/monitor');
 let signedon = false;
 let buttons;
+let first;
 
-function graph(headings) {
+function graph(msg) {
+   first = new Date(msg.Timestamp);
    let data = [];
 
-   for (const heading of headings) {
+   for (const heading of msg.Enabled) {
       data.push({
          name: heading,
          mode: 'lines',
-         x: [0],
-         y: [0]
+         x: [],
+         y: []
       });
    }
 
    const layout = {
+      height: 700,
+      xaxis: {
+         rangeslider: {},
+      },
       yaxis: {
-         title: 'events'
+         title: 'events',
       }
    }
 
@@ -28,31 +34,39 @@ function graph(headings) {
 }
 
 function update(data) {
-   let time = new Date();
+   const time = new Date(data.Timestamp);
 
    let update = {
-      x: [[time]],
-      y: [[rand()]]
-      }
+      x: [],
+      y: []
+   }
 
-   let olderTime = time.setMinutes(time.getMinutes() - 1);
-   let futureTime = time.setMinutes(time.getMinutes() + 1);
+   let indicies = [];
 
-   let minuteView = {
+   for (let i = 0; i < data.Values.length; i++) {
+      update.x.push([time]);
+      update.y.push([data.Values[i]]);
+      indicies.push(i);
+   }
+
+   const olderTime = time.setMinutes(time.getMinutes() - 1);
+   const newerTime = time.setMinutes(time.getMinutes() + 1);
+   const view = {
       xaxis: {
          type: 'date',
-         range: [olderTime,futureTime]
-      }
+         range: [olderTime, newerTime],
+         rangeslider: {}
+     }
    };
 
-   Plotly.relayout('graph', minuteView);
-   Plotly.extendTraces('graph', update, [0])
+   Plotly.extendTraces('graph', update, indicies)
+   Plotly.relayout('graph', view);
 }
 
 function signon(data) {
-   for (let i = 0; i < data["Tree"].length; i++) {
-      for (const key in data["Tree"][i]) {
-         if (!data["Tree"][i].hasOwnProperty(key))
+   for (let i = 0; i < data.Tree.length; i++) {
+      for (const key in data.Tree[i]) {
+         if (!data.Tree[i].hasOwnProperty(key))
             continue;
 
          buttons = document.createElement('details');
@@ -61,7 +75,7 @@ function signon(data) {
          let text = document.createTextNode(key+' events');
          node.appendChild(text);
 
-         elems = data["Tree"][i][key];
+         elems = data.Tree[i][key];
 
          for (const elem of elems) {
             let btn = document.createElement('button')
@@ -71,7 +85,7 @@ function signon(data) {
             buttons.appendChild(btn);
          }
 
-         let container = document.querySelector("#events");
+         let container = document.querySelector('#events');
          container.appendChild(buttons);
       }
    }
@@ -87,29 +101,24 @@ ws.onmessage = function(e) {
    }
 
    // handle enabled updates
-   if (data[0] == 'enabled') {
-      // drop 'enabled' element
-      data.shift();
-
+   if (data.Op == 'enabled') {
       for (let btn of buttons.childNodes) {
          if (!btn.className.startsWith('btn')) {
             continue;
          }
 
-         btn.className = data.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1';
+         btn.className = data.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1';
       }
 
       graph(data);
       return;
    }
 
-   console.log('recv: '+JSON.stringify(data, null, 2));
    update(data);
 }
 
 ws.onopen = function(e) {
    ws.send('463ba1974b06')
-   console.log('authenticated');
 }
 
 ws.onclose = function(e) {
