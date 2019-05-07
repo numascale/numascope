@@ -71,6 +71,44 @@ func remove(c *websocket.Conn) {
    panic("element not found")
 }
 
+// FIXME prevent duplicate enabling
+func enable(desc string) {
+   for i := range sensors {
+      var enabled []uint16
+      supported := *sensors[i].sensor.supported()
+
+      for j := range supported {
+         if supported[j].desc == desc {
+            enabled = append(enabled, uint16(j))
+            sensors[i].enabled = append(sensors[i].enabled, &supported[j])
+         }
+      }
+
+      fmt.Printf("enabled %+v\n", enabled)
+      sensors[i].sensor.enable(enabled, *discrete)
+   }
+}
+
+func disable(desc string) {
+}
+
+func toggle(desc string, state string) {
+   switch (state) {
+   case "on":
+      enable(desc)
+   case "off":
+      disable(desc)
+   default:
+      fmt.Printf("unexpected state %s\n", state)
+      return
+   }
+
+   // update all clients
+   for _, c := range connections {
+      change(c)
+   }
+}
+
 func monitor(w http.ResponseWriter, r *http.Request) {
    c, err := upgrader.Upgrade(w, r, nil)
    if err != nil {
@@ -99,7 +137,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    }
 
    if *debug {
-      fmt.Println("auth succeeded")
+      fmt.Printf("\nauth succeeded\n")
    }
 
    msg := SignonMessage{
@@ -131,7 +169,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    connections = append(connections, c)
 
    for {
-      var msg string
+      var msg map[string]string
       err := c.ReadJSON(&msg)
 
       if err != nil {
@@ -143,7 +181,14 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       }
 
       if *debug {
-         fmt.Printf("recv %+v\n", msg)
+         fmt.Printf("recv %#v\n", msg)
+      }
+
+      switch msg["Op"] {
+      case "update":
+         toggle(msg["Event"], msg["State"])
+      default:
+         fmt.Printf("received unknown message %+v", msg)
       }
    }
 }

@@ -1,7 +1,3 @@
-function rand() {
-  return Math.random();
-}
-
 const ws = new WebSocket('ws://'+location.host+'/monitor');
 let signedon = false;
 let buttons;
@@ -63,6 +59,18 @@ function update(data) {
    Plotly.relayout('graph', view);
 }
 
+function select(info) {
+   const msg = {
+      Op: "update",
+      Event: info.target.innerText,
+      State: info.target.className.includes('btn-primary') ? "off" : "on"
+   };
+
+   val = JSON.stringify(msg);
+   console.log(val);
+   ws.send(val);
+}
+
 function signon(data) {
    for (let i = 0; i < data.Tree.length; i++) {
       for (const key in data.Tree[i]) {
@@ -78,7 +86,9 @@ function signon(data) {
          elems = data.Tree[i][key];
 
          for (const elem of elems) {
-            let btn = document.createElement('button')
+            let btn = document.createElement('button');
+            btn.onclick = select;
+
             let text = document.createTextNode(elem);
             btn.appendChild(text);
             btn.className = 'btn btn-light btn-sm m-1';
