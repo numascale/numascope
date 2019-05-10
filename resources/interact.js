@@ -23,6 +23,9 @@ function graph(msg) {
       },
       yaxis: {
          title: 'events',
+      },
+      layout: {
+         "orientation": "h",
       }
    }
 
@@ -67,7 +70,6 @@ function select(info) {
    };
 
    val = JSON.stringify(msg);
-   console.log(val);
    ws.send(val);
 }
 
@@ -110,7 +112,6 @@ ws.onmessage = function(e) {
       return;
    }
 
-   // handle enabled updates
    if (data.Op == 'enabled') {
       for (let btn of buttons.childNodes) {
          if (!btn.className.startsWith('btn')) {

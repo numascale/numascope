@@ -22,7 +22,7 @@ var (
    events     = flag.String("events", "pgfault,pgmajfault,numa_hit,numa_miss,numa_foreign,numa_local,numa_other", "comma-separated list of events")
    list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
-   interval   = 1
+   interval   = 400
    present    = []Sensor{
       NewNumaconnect2(),
       NewKernel(),
@@ -39,6 +39,7 @@ func vmxstat() {
    case flag.NArg() == 1:
       var err error
       interval, err = strconv.Atoi(flag.Arg(0))
+      interval *= 1000 // convert to milliseconds
       if err != nil {
          usage()
       }
@@ -62,7 +63,7 @@ func vmxstat() {
       os.Exit(0)
    }
 
-   delay := time.Duration(interval) * time.Second
+   delay := time.Duration(interval) * time.Millisecond
    line := 0
 
    headings := make([][]string, len(present))
@@ -146,7 +147,7 @@ func main() {
    initweb(*listenAddr)
 
    for {
-      time.Sleep(time.Duration(interval) * time.Second)
+      time.Sleep(time.Duration(interval) * time.Millisecond)
       timestamp := uint64(time.Now().UnixNano() / 1e6)
       var samples []uint64
 

@@ -137,7 +137,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    }
 
    if *debug {
-      fmt.Printf("\nauth succeeded\n")
+      fmt.Println("auth succeeded")
    }
 
    msg := SignonMessage{
