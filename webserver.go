@@ -27,7 +27,7 @@ type ChangeMessage struct {
 type UpdateMessage struct {
    Op        string
    Timestamp uint64
-   Values    []uint64
+   Values    []int64
 }
 
 func change(c *websocket.Conn) {
@@ -47,7 +47,7 @@ func change(c *websocket.Conn) {
    c.WriteJSON(&msg)
 }
 
-func update(timestamp uint64, samples []uint64) {
+func update(timestamp uint64, samples []int64) {
    msg := UpdateMessage{
       Op: "update",
       Timestamp: timestamp,

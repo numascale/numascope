@@ -187,7 +187,7 @@ func (d *Kernel) Headings() []string {
    return headings
 }
 
-func (d *Kernel) Sample() []uint64 {
+func (d *Kernel) Sample() []int64 {
    buf := make([]byte, 8192)
 
    current := time.Now()
@@ -210,7 +210,7 @@ func (d *Kernel) Sample() []uint64 {
       m[parts[0]] = count
    }
 
-   samples := make([]uint64, d.nEnabled)
+   samples := make([]int64, d.nEnabled)
    i := 0
 
    for _, event := range d.events {
@@ -219,7 +219,7 @@ func (d *Kernel) Sample() []uint64 {
       }
 
       val := m[event.mnemonic]
-      samples[i] = (val - d.last[i]) * 1000000000 / delta
+      samples[i] = (int64(val) - int64(d.last[i])) * 1000000000 / int64(delta)
       d.last[i] = val
       i++
    }

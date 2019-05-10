@@ -249,13 +249,13 @@ func (d *Numaconnect2) Headings() []string {
    return headings
 }
 
-func (d *Numaconnect2) Sample() []uint64 {
-   var samples []uint64
+func (d *Numaconnect2) Sample() []int64 {
+   var samples []int64
 
    if d.discrete {
-      samples = make([]uint64, d.nEnabled * len(d.cards))
+      samples = make([]int64, d.nEnabled * len(d.cards))
    } else {
-      samples = make([]uint64, d.nEnabled)
+      samples = make([]int64, d.nEnabled)
    }
 
    for n := range d.cards {
@@ -292,10 +292,10 @@ func (d *Numaconnect2) Sample() []uint64 {
          sample := delta * 200000000 / interval // clockcycles @ 200MHz
 
          if d.discrete {
-            samples[n*len(d.events)+i] = sample
+            samples[n*len(d.events)+i] = int64(sample)
          } else {
             // sum totals for average
-            samples[i] += sample
+            samples[i] += int64(sample)
             d.cards[n].last[i] = val
          }
 
@@ -308,7 +308,7 @@ func (d *Numaconnect2) Sample() []uint64 {
    if !d.discrete {
       // divide through for average
       for i := range samples {
-         samples[i] /= uint64(len(d.cards))
+         samples[i] /= int64(len(d.cards))
       }
    }
 

@@ -25,7 +25,7 @@ type Sensor interface {
    // returns headings of enabled events, accounting for discrete or not
    Headings() []string
    // returns samples
-   Sample() []uint64
+   Sample() []int64
 }
 
 

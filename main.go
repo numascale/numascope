@@ -170,7 +170,7 @@ func main() {
    for {
       time.Sleep(time.Duration(interval) * time.Millisecond)
       timestamp := uint64(time.Now().UnixNano() / 1e6)
-      var samples []uint64
+      var samples []int64
 
       for _, sensor := range present {
          samples = append(samples, sensor.Sample()...)
