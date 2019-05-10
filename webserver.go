@@ -1,6 +1,7 @@
 package main
 
 import (
+//   "reflect"
    "fmt"
    "time"
    "net/http"
@@ -35,9 +36,11 @@ func change(c *websocket.Conn) {
       Timestamp: uint64(time.Now().UnixNano() / 1e6),
    }
 
-   for _, sensor := range sensors {
-      for _, elem := range sensor.enabled {
-         msg.Enabled = append(msg.Enabled, elem.desc)
+   for _, sensor := range present {
+      for _, event := range sensor.Events() {
+         if event.enabled {
+            msg.Enabled = append(msg.Enabled, event.desc)
+         }
       }
    }
 
@@ -71,36 +74,33 @@ func remove(c *websocket.Conn) {
    panic("element not found")
 }
 
-// FIXME prevent duplicate enabling
-func enable(desc string) {
-   for i := range sensors {
-      var enabled []uint16
-      supported := *sensors[i].sensor.supported()
+func state(desc string, state bool) {
+   for _, sensor := range present {
+      events := sensor.Events()
 
-      for j := range supported {
-         if supported[j].desc == desc {
-            enabled = append(enabled, uint16(j))
-            sensors[i].enabled = append(sensors[i].enabled, &supported[j])
+      for i := range events {
+         if events[i].desc == desc {
+            events[i].enabled = state
+            if *debug {
+               fmt.Printf("set '%s' %t\n", desc, state)
+            }
+            sensor.Enable(*discrete)
+            return
          }
       }
-
-      fmt.Printf("enabled %+v\n", enabled)
-      sensors[i].sensor.enable(enabled, *discrete)
    }
+
+   panic("event not found")
 }
 
-func disable(desc string) {
-}
-
-func toggle(desc string, state string) {
-   switch (state) {
+func toggle(desc string, val string) {
+   switch (val) {
    case "on":
-      enable(desc)
+      state(desc, true)
    case "off":
-      disable(desc)
+      state(desc, false)
    default:
-      fmt.Printf("unexpected state %s\n", state)
-      return
+      panic("unexpected state")
    }
 
    // update all clients
@@ -142,17 +142,17 @@ func monitor(w http.ResponseWriter, r *http.Request) {
 
    msg := SignonMessage{
       Interval: interval,
-      Tree: make([]map[string][]string, len(sensors)),
+      Tree: make([]map[string][]string, len(present)),
    }
 
-   for i, sensor := range sensors {
+   for i, sensor := range present {
       msg.Tree[i] = make(map[string][]string)
-      name := sensor.sensor.name()
-      supported := *sensor.sensor.supported()
+      name := sensor.Name()
+      events := sensor.Events()
 
-      msg.Tree[i][name] = make([]string, len(supported))
+      msg.Tree[i][name] = make([]string, len(events))
 
-      for j, val := range supported {
+      for j, val := range events {
          msg.Tree[i][name][j] = val.desc
       }
    }

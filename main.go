@@ -10,12 +10,6 @@ import (
    "strings"
 )
 
-type Present struct {
-   sensor Sensor
-   units int
-   enabled []*Event
-}
-
 const (
    Readings = 60 * 60 * 24 * 30
 )
@@ -29,9 +23,9 @@ var (
    list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
    interval   = 1
-   sensors    = []Present{
-      {sensor: &Kernel{}},
-      {sensor: &Numaconnect2{}},
+   present    = []Sensor{
+      NewNumaconnect2(),
+      NewKernel(),
    }
 )
 
@@ -53,17 +47,15 @@ func vmxstat() {
    }
 
    if *debug {
-      fmt.Printf("detected %v\n", sensors)
+      fmt.Printf("detected %v\n", present)
    }
 
    if *list {
-      for _, sensor := range sensors {
-         fmt.Printf("%s events:\n", sensor.sensor.name())
+      for _, sensor := range present {
+         fmt.Printf("%s events:\n", sensor.Name())
 
-         for _, val := range *sensor.sensor.supported() {
-//            if *advanced || !val.advanced {
-               fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
-//            }
+         for _, val := range sensor.Events() {
+            fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
          }
       }
 
@@ -73,37 +65,30 @@ func vmxstat() {
    delay := time.Duration(interval) * time.Second
    line := 0
 
+   headings := make([][]string, len(present))
+
+   for i, sensor := range present {
+      headings[i] = sensor.Headings()
+   }
+
    for {
       time.Sleep(delay)
 
       // print column headings
       if line == 0 {
-         for _, sensor := range sensors {
-            for _, event := range sensor.enabled {
-               if *discrete {
-                  for unit := 0; unit < sensor.units; unit++ {
-                     fmt.Printf("%s:%d ", event.mnemonic, unit)
-                  }
-               } else {
-                  fmt.Printf("%s ", event.mnemonic)
-               }
-            }
+         for i := range present {
+            fmt.Print(strings.Join(headings[i], " "))
          }
-         fmt.Println("")
+         fmt.Println()
       }
+
       line = (line + 1) % 25
 
-      for _, sensor := range sensors {
-         samples := sensor.sensor.sample()
+      for i, sensor := range present {
+         samples := sensor.Sample()
 
-         for i, event := range sensor.enabled {
-            if *discrete {
-               for unit := 0; unit < sensor.units; unit++ {
-                  fmt.Printf("%*d ", len(event.mnemonic)+2, samples[i*len(sensor.enabled)+unit])
-               }
-            } else {
-               fmt.Printf("%*d ", len(event.mnemonic), samples[i])
-            }
+         for j, heading := range headings[i] {
+            fmt.Printf("%*d ", len(heading), samples[j])
          }
       }
       fmt.Println()
@@ -123,34 +108,28 @@ func main() {
    }
 
    // remove any sensors where probe fails
-   for i := len(sensors)-1; i >= 0; i-- {
-      sensors[i].units = int(sensors[i].sensor.probe())
-
-      if sensors[i].units == 0 {
-         sensors = append(sensors[:i], sensors[i+1:]...)
+   for i := len(present)-1; i >= 0; i-- {
+      if !present[i].Present() {
+         present = append(present[:i], present[i+1:]...)
       }
    }
 
    elems := strings.Split(*events, ",")
    total := 0
 
-   // build a list of enabled events, storing pointer to event struct
-   for i := range sensors {
-      var enabled []uint16
+   for _, sensor := range present {
+      events := sensor.Events()
 
       for _, elem := range elems {
-         supported := *sensors[i].sensor.supported()
-
-         for j := range supported {
-            if supported[j].mnemonic == elem {
-               enabled = append(enabled, uint16(j))
-               sensors[i].enabled = append(sensors[i].enabled, &supported[j])
+         for i := range events {
+            if events[i].mnemonic == elem {
+               events[i].enabled = true
                total++
             }
          }
       }
 
-      sensors[i].sensor.enable(enabled, *discrete)
+      sensor.Enable(*discrete)
    }
 
    if total == 0 {
@@ -171,8 +150,8 @@ func main() {
       timestamp := uint64(time.Now().UnixNano() / 1e6)
       var samples []uint64
 
-      for _, sensor := range sensors {
-         samples = append(samples, sensor.sensor.sample()...)
+      for _, sensor := range present {
+         samples = append(samples, sensor.Sample()...)
       }
 
       update(timestamp, &samples)

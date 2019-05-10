@@ -8,24 +8,26 @@ import (
 )
 
 type Event struct {
-   index int16 // -1 means unindexed
-//   advanced bool
+   index    int16 // -1 means unindexed
    mnemonic string
-   desc string
+   desc     string
+   enabled  bool
 }
 
 type Sensor interface {
-   probe() uint
-   name() string
-   supported() *[]Event
-   enable([]uint16, bool)
-   sample() []uint64
+   // checks if sensor is present
+   Present() bool
+   Name() string
+   // scans through and activates enabled events, and if discrete
+   Enable(discrete bool)
+   // returns slice of events
+   Events() []Event
+   // returns headings of enabled events, accounting for discrete or not
+   Headings() []string
+   // returns samples
+   Sample() []uint64
 }
 
-type Reading struct {
-   timestamp uint64 // nanoseconds
-   val       uint64
-}
 
 // Checks if an error occurred
 func validate(err error) {
