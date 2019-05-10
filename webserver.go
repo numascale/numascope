@@ -47,11 +47,11 @@ func change(c *websocket.Conn) {
    c.WriteJSON(&msg)
 }
 
-func update(timestamp uint64, samples *[]uint64) {
+func update(timestamp uint64, samples []uint64) {
    msg := UpdateMessage{
       Op: "update",
       Timestamp: timestamp,
-      Values: *samples,
+      Values: samples,
    }
 
    for _, c := range connections {
@@ -81,9 +81,6 @@ func state(desc string, state bool) {
       for i := range events {
          if events[i].desc == desc {
             events[i].enabled = state
-            if *debug {
-               fmt.Printf("set '%s' %t\n", desc, state)
-            }
             sensor.Enable(*discrete)
             return
          }

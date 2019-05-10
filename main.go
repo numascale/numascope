@@ -39,10 +39,10 @@ func vmxstat() {
    case flag.NArg() == 1:
       var err error
       interval, err = strconv.Atoi(flag.Arg(0))
-      interval *= 1000 // convert to milliseconds
       if err != nil {
          usage()
       }
+      interval *= 1000 // convert to milliseconds
    case flag.NArg() > 1:
       usage()
    }
@@ -65,7 +65,6 @@ func vmxstat() {
 
    delay := time.Duration(interval) * time.Millisecond
    line := 0
-
    headings := make([][]string, len(present))
 
    for i, sensor := range present {
@@ -177,6 +176,6 @@ func main() {
          samples = append(samples, sensor.Sample()...)
       }
 
-      update(timestamp, &samples)
+      update(timestamp, samples)
    }
 }
