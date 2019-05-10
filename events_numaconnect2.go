@@ -307,7 +307,7 @@ func (d *Numaconnect2) Sample() []uint64 {
 
    if !d.discrete {
       // divide through for average
-      for i := range d.events {
+      for i := range samples {
          samples[i] /= uint64(len(d.cards))
       }
    }

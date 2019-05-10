@@ -17,6 +17,7 @@ function graph(msg) {
    }
 
    const layout = {
+      autosize: true,
       height: 700,
       xaxis: {
          rangeslider: {},
@@ -24,9 +25,9 @@ function graph(msg) {
       yaxis: {
          title: 'events',
       },
-      layout: {
-         "orientation": "h",
-      }
+      legend: {
+         orientation: 'h',
+      },
    }
 
    Plotly.react('graph', data, layout);
