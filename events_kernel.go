@@ -124,7 +124,7 @@ func NewKernel() *Kernel {
          {-1, "unevictable_pgs_munlocked", "unevictable pages unlocked", false},
          {-1, "unevictable_pgs_cleared", "unevictable pages zeroed", false},
          {-1, "unevictable_pgs_stranded", "unevictable pages which couldn't be isolated", false},
-         {-1, "thp_fault_alloc", "2MB or larger pages allocated", false},
+         {-1, "thp_fault_alloc", "2MB or larger pages page-faulted", false},
          {-1, "thp_fault_fallback", "2MB or larger pages reused", false},
          {-1, "thp_collapse_alloc", "2MB or larger pages from merging", false},
          {-1, "thp_collapse_alloc_failed", "2MB or larger page merge failure", false},

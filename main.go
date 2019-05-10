@@ -100,6 +100,28 @@ func vmxstat() {
    }
 }
 
+func dups() {
+   dups := 0
+
+   // check for duplicates
+   for _, sensor := range present {
+      events := sensor.Events()
+
+      for i := range events {
+         for j := range events {
+            if i != j && (events[i].mnemonic == events[j].mnemonic || events[i].desc == events[j].desc) {
+               fmt.Printf("%s event %d %+v and %d %+v overlap\n", sensor.Name(), i, events[i], j, events[j])
+               dups++
+            }
+         }
+      }
+   }
+
+   if dups > 0 {
+      os.Exit(1)
+   }
+}
+
 func main() {
    flag.Parse()
 
