@@ -9,10 +9,15 @@ func TestMain(m *testing.M) {
    fmt.Println("TestMain")
    dev := &Numaconnect2{}
 
-   if dev.probe() > 0 {
-      dev.enable([]uint16{0x68, 0x80}, false)
+   if dev.Present() {
+      events := dev.Events()
+      events[1].enabled = true
+      events[3].enabled = true
+
+      dev.Enable(true)
+
       for i := 0; i < 3; i++ {
-         _ = dev.sample()
+         _ = dev.Sample()
       }
    } else {
       fmt.Println("Numachip2 not detected")
