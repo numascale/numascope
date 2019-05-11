@@ -4,13 +4,9 @@ import (
 //   "reflect"
    "fmt"
    "time"
+   "sync"
    "net/http"
    "github.com/gorilla/websocket"
-)
-
-var (
-   upgrader = websocket.Upgrader{}
-   connections []*websocket.Conn
 )
 
 type SignonMessage struct {
@@ -30,7 +26,17 @@ type UpdateMessage struct {
    Values    []int64
 }
 
-func change(c *websocket.Conn) {
+type Connection struct {
+   socket *websocket.Conn
+   mutex  *sync.Mutex
+}
+
+var (
+   upgrader = websocket.Upgrader{}
+   connections []Connection
+)
+
+func change(c Connection) {
    msg := ChangeMessage{
       Op: "enabled",
       Timestamp: uint64(time.Now().UnixNano() / 1e6),
@@ -44,7 +50,9 @@ func change(c *websocket.Conn) {
       }
    }
 
-   c.WriteJSON(&msg)
+   c.mutex.Lock()
+   c.socket.WriteJSON(&msg)
+   c.mutex.Unlock()
 }
 
 func update(timestamp uint64, samples []int64) {
@@ -55,7 +63,10 @@ func update(timestamp uint64, samples []int64) {
    }
 
    for _, c := range connections {
-      err := c.WriteJSON(&msg)
+      c.mutex.Lock()
+      err := c.socket.WriteJSON(&msg)
+      c.mutex.Unlock()
+
       if err != nil && *debug {
          fmt.Println("failed writing: ", err)
       }
@@ -64,7 +75,7 @@ func update(timestamp uint64, samples []int64) {
 
 func remove(c *websocket.Conn) {
    for i := range connections {
-      if connections[i] == c {
+      if connections[i].socket == c {
          connections[i] = connections[len(connections)-1]
          connections = connections[:len(connections)-1]
          return
@@ -107,7 +118,7 @@ func toggle(desc string, val string) {
 }
 
 func monitor(w http.ResponseWriter, r *http.Request) {
-   c, err := upgrader.Upgrade(w, r, nil)
+   socket, err := upgrader.Upgrade(w, r, nil)
    if err != nil {
       if *debug {
          fmt.Print("upgrade:", err)
@@ -115,10 +126,12 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       return
    }
 
-   defer c.Close()
+   defer socket.Close()
+
+   c := Connection{socket: socket, mutex: &sync.Mutex{}}
 
    // handshake
-   _, message, err := c.ReadMessage()
+   _, message, err := c.socket.ReadMessage()
    if err != nil {
       if *debug {
          fmt.Println("read:", err)
@@ -154,7 +167,10 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       }
    }
 
-   err = c.WriteJSON(&msg)
+   c.mutex.Lock()
+   err = c.socket.WriteJSON(&msg)
+   c.mutex.Unlock()
+
    if err != nil {
       if *debug {
          fmt.Println("write:", err)
@@ -167,13 +183,13 @@ func monitor(w http.ResponseWriter, r *http.Request) {
 
    for {
       var msg map[string]string
-      err := c.ReadJSON(&msg)
+      err := c.socket.ReadJSON(&msg)
 
       if err != nil {
          if *debug {
             fmt.Println("failed reading:", err)
          }
-         remove(c)
+         remove(c.socket)
          break
       }
 
