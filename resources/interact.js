@@ -1,19 +1,20 @@
-const ws = new WebSocket('ws://'+location.host+'/monitor');
-let signedon = false;
-let buttons = [];
-let first;
+const ws = new WebSocket('ws://'+location.host+'/monitor')
+let signedon = false
+let buttons = []
+let first
 
 function graph(msg) {
-   first = new Date(msg.Timestamp);
-   let data = [];
+   first = new Date(msg.Timestamp)
+   let data = []
 
    for (const heading of msg.Enabled) {
       data.push({
          name: heading,
+         type: 'scatter',
          mode: 'lines',
          x: [],
          y: []
-      });
+      })
    }
 
    const layout = {
@@ -27,12 +28,12 @@ function graph(msg) {
       },
       legend: {
          yanchor: 'top',
-         y: -0.4,
+         y: -0.5,
          orientation: 'h'
       }
    }
 
-   Plotly.react('graph', data, layout);
+   Plotly.react('graph', data, layout, {displaylogo: false, responsive: true})
 }
 
 function update(data) {
@@ -40,33 +41,33 @@ function update(data) {
    if (data.Values == null)
       data.Values = []
 
-   const time = new Date(data.Timestamp);
+   const time = new Date(data.Timestamp)
 
    let update = {
       x: [],
       y: []
    }
 
-   let indicies = [];
+   let indicies = []
 
    for (let i = 0; i < data.Values.length; i++) {
-      update.x.push([time]);
-      update.y.push([data.Values[i]]);
-      indicies.push(i);
+      update.x.push([time])
+      update.y.push([data.Values[i]])
+      indicies.push(i)
    }
 
-   const olderTime = time.setMinutes(time.getMinutes() - 1);
-   const newerTime = time.setMinutes(time.getMinutes() + 1);
+   const olderTime = time.setMinutes(time.getMinutes() - 1)
+   const newerTime = time.setMinutes(time.getMinutes() + 1)
    const view = {
       xaxis: {
          type: 'date',
          range: [olderTime, newerTime],
          rangeslider: {}
      }
-   };
+   }
 
    Plotly.extendTraces('graph', update, indicies)
-   Plotly.relayout('graph', view);
+   Plotly.relayout('graph', view)
 }
 
 function select(info) {
@@ -74,50 +75,50 @@ function select(info) {
       Op: "update",
       Event: info.target.innerText,
       State: info.target.className.includes('btn-primary') ? "off" : "on"
-   };
+   }
 
-   val = JSON.stringify(msg);
-   ws.send(val);
+   val = JSON.stringify(msg)
+   ws.send(val)
 }
 
 function signon(data) {
    for (let i = 0; i < data.Tree.length; i++) {
       for (const key in data.Tree[i]) {
          if (!data.Tree[i].hasOwnProperty(key))
-            continue;
+            continue
 
-         subtree = document.createElement('details');
-         let node = document.createElement('summary');
-         subtree.appendChild(node);
-         let text = document.createTextNode(key+' metrics');
-         node.appendChild(text);
+         subtree = document.createElement('details')
+         let node = document.createElement('summary')
+         subtree.appendChild(node)
+         let text = document.createTextNode(key+' metrics')
+         node.appendChild(text)
 
-         elems = data.Tree[i][key];
+         elems = data.Tree[i][key]
 
          for (const elem of elems) {
-            let btn = document.createElement('button');
-            btn.onclick = select;
+            let btn = document.createElement('button')
+            btn.onclick = select
 
-            let text = document.createTextNode(elem);
-            btn.appendChild(text);
-            btn.className = 'btn btn-light btn-sm m-1';
-            subtree.appendChild(btn);
+            let text = document.createTextNode(elem)
+            btn.appendChild(text)
+            btn.className = 'btn btn-light btn-sm m-1'
+            subtree.appendChild(btn)
             buttons.push(btn)
          }
 
-         let container = document.querySelector('#events');
-         container.appendChild(subtree);
+         let container = document.querySelector('#events')
+         container.appendChild(subtree)
       }
    }
 }
 
 ws.onmessage = function(e) {
-   let data = JSON.parse(e.data);
+   let data = JSON.parse(e.data)
 
    if (signedon == false) {
-      signon(data);
-      signedon = true;
-      return;
+      signon(data)
+      signedon = true
+      return
    }
 
    if (data.Op == 'enabled') {
@@ -126,13 +127,13 @@ ws.onmessage = function(e) {
          data.Enabled = []
 
       for (let btn of buttons)
-         btn.className = data.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1';
+         btn.className = data.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
 
-      graph(data);
-      return;
+      graph(data)
+      return
    }
 
-   update(data);
+   update(data)
 }
 
 ws.onopen = function(e) {
@@ -140,9 +141,9 @@ ws.onopen = function(e) {
 }
 
 ws.onclose = function(e) {
-   console.log('closed');
+   console.log('closed')
 }
 
 ws.onerror = function(e) {
-   console.log('error');
+   console.log('error')
 }
