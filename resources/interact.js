@@ -1,6 +1,6 @@
 const ws = new WebSocket('ws://'+location.host+'/monitor');
 let signedon = false;
-let buttons;
+let buttons = [];
 let first;
 
 function graph(msg) {
@@ -20,16 +20,16 @@ function graph(msg) {
       autosize: true,
       height: 700,
       xaxis: {
-         rangeslider: {},
+         rangeslider: {}
       },
       yaxis: {
-         title: 'events',
+         title: 'events'
       },
       legend: {
          yanchor: 'top',
          y: -0.4,
-         orientation: 'h',
-      },
+         orientation: 'h'
+      }
    }
 
    Plotly.react('graph', data, layout);
@@ -86,9 +86,9 @@ function signon(data) {
          if (!data.Tree[i].hasOwnProperty(key))
             continue;
 
-         buttons = document.createElement('details');
+         subtree = document.createElement('details');
          let node = document.createElement('summary');
-         buttons.appendChild(node);
+         subtree.appendChild(node);
          let text = document.createTextNode(key+' metrics');
          node.appendChild(text);
 
@@ -101,11 +101,12 @@ function signon(data) {
             let text = document.createTextNode(elem);
             btn.appendChild(text);
             btn.className = 'btn btn-light btn-sm m-1';
-            buttons.appendChild(btn);
+            subtree.appendChild(btn);
+            buttons.push(btn)
          }
 
          let container = document.querySelector('#events');
-         container.appendChild(buttons);
+         container.appendChild(subtree);
       }
    }
 }
@@ -124,13 +125,8 @@ ws.onmessage = function(e) {
       if (data.Enabled == null)
          data.Enabled = []
 
-      for (let btn of buttons.childNodes) {
-         if (!btn.className.startsWith('btn')) {
-            continue;
-         }
-
+      for (let btn of buttons)
          btn.className = data.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1';
-      }
 
       graph(data);
       return;
