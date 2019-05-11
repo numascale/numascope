@@ -26,6 +26,8 @@ function graph(msg) {
          title: 'events',
       },
       legend: {
+         yanchor: 'top',
+         y: -0.4,
          orientation: 'h',
       },
    }
