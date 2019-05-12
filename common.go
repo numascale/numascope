@@ -20,6 +20,8 @@ type Sensor interface {
    Name() string
    // scans through and activates enabled events, and if discrete
    Enable(discrete bool)
+   Lock()
+   Unlock()
    // returns slice of events
    Events() []Event
    // returns headings of enabled events, accounting for discrete or not

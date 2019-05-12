@@ -94,14 +94,20 @@ func remove(c *websocket.Conn) {
 func state(desc string, state bool) {
    for _, sensor := range present {
       events := sensor.Events()
+      sensor.Lock()
 
       for i := range events {
          if events[i].desc == desc {
             events[i].enabled = state
             sensor.Enable(*discrete)
+            sensor.Unlock()
+            // discard values to initialise last
+            sensor.Sample()
             return
          }
       }
+
+      sensor.Unlock()
    }
 
    panic("event not found")

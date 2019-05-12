@@ -2,6 +2,7 @@ package main
 
 import (
    "fmt"
+   "sync"
    "unsafe"
    "golang.org/x/sys/unix"
 )
@@ -18,6 +19,7 @@ type Numaconnect2 struct {
    cards    []Numachip2
    discrete bool
    nEnabled int
+   mutex    sync.Mutex
 }
 
 const (
@@ -89,7 +91,7 @@ func NewNumaconnect2() *Numaconnect2 {
          {0x298, "n2RdSizedSent", "RdSized commands sent", false},
          {0x2A0, "n2WrSizedSent", "WrSized commands sent", false},
          {0x2A8, "n2BcastProbeCmdSent", "broadcast Probe commands sent", false},
-         {0x2B0, "n2BcastCmdSent", "Broadcast commands sent", false},
+         {0x2B0, "n2BcastCmdSent", "broadcast commands sent", false},
          {0x2B8, "n2RdRespSent", "RdResponse commands sent", false},
          {0x2C0, "n2ProbeRespSent", "ProbeResponse commands sent", false},
          {0x2C8, "n2CachelinesSent", "data packets with full cachelines of data sent", false},
@@ -211,6 +213,14 @@ func (d *Numaconnect2) Name() string {
    return "Numascale NumaConnect2"
 }
 
+func (d *Numaconnect2) Lock() {
+   d.mutex.Lock()
+}
+
+func (d *Numaconnect2) Unlock() {
+   d.mutex.Unlock()
+}
+
 func (d *Numaconnect2) Enable(discrete bool) {
    d.discrete = discrete
    d.nEnabled = 0
@@ -251,6 +261,9 @@ func (d *Numaconnect2) Headings() []string {
 
 func (d *Numaconnect2) Sample() []int64 {
    var samples []int64
+
+   d.Lock()
+   defer d.Unlock()
 
    if d.discrete {
       samples = make([]int64, d.nEnabled * len(d.cards))

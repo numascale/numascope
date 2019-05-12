@@ -2,8 +2,9 @@ package main
 
 import (
    "os"
-   "strings"
    "strconv"
+   "strings"
+   "sync"
    "time"
 )
 
@@ -13,6 +14,7 @@ type Kernel struct {
    last        []uint64
    lastElapsed time.Time
    nEnabled    int
+   mutex       sync.Mutex
 }
 
 func NewKernel() *Kernel {
@@ -156,7 +158,6 @@ func (d *Kernel) Name() string {
 }
 
 func (d *Kernel) Enable(discrete bool) {
-   d.last = []uint64{}
    d.nEnabled = 0
 
    for _, event := range d.events {
@@ -170,9 +171,6 @@ func (d *Kernel) Enable(discrete bool) {
    var err error
    d.file, err = os.Open("/proc/vmstat")
    validate(err)
-
-   // update last values, discarding differences
-   _ = d.Sample()
 }
 
 func (d *Kernel) Headings() []string {
@@ -187,6 +185,14 @@ func (d *Kernel) Headings() []string {
    return headings
 }
 
+func (d *Kernel) Lock() {
+   d.mutex.Lock()
+}
+
+func (d *Kernel) Unlock() {
+   d.mutex.Unlock()
+}
+
 func (d *Kernel) Sample() []int64 {
    buf := make([]byte, 8192)
 
@@ -194,7 +200,7 @@ func (d *Kernel) Sample() []int64 {
    delta := uint64(current.Sub(d.lastElapsed) / time.Nanosecond)
    d.lastElapsed = current
 
-   d.file.Seek(0, 0) // FIXME debug why SeekAt returns EOF
+   d.file.Seek(0, 0)
    n, err := d.file.Read(buf)
    validate(err)
 
@@ -210,6 +216,8 @@ func (d *Kernel) Sample() []int64 {
       m[parts[0]] = count
    }
 
+   d.Lock()
+
    samples := make([]int64, d.nEnabled)
    i := 0
 
@@ -224,6 +232,7 @@ func (d *Kernel) Sample() []int64 {
       i++
    }
 
+   d.Unlock()
    return samples
 }
 
