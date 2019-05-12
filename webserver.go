@@ -3,11 +3,11 @@ package main
 import (
    "fmt"
    "net/http"
-   "os"
    "sync"
    "time"
 
    "github.com/gorilla/websocket"
+   "golang.org/x/sys/unix"
 )
 
 type SignonMessage struct {
@@ -218,10 +218,10 @@ func monitor(w http.ResponseWriter, r *http.Request) {
 
 func initweb(addr string) {
    path := "/usr/local/share/numascope"
-   _, err := os.Stat(path)
+   err := unix.Access(path, unix.R_OK)
    if err != nil {
       path = "resources"
-      _, err := os.Stat(path)
+      err := unix.Access(path, unix.R_OK)
       if err != nil {
          panic("/usr/local/share/numascope or resources not present")
       }
