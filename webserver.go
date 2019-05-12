@@ -1,11 +1,12 @@
 package main
 
 import (
-//   "reflect"
    "fmt"
-   "time"
-   "sync"
    "net/http"
+   "os"
+   "sync"
+   "time"
+
    "github.com/gorilla/websocket"
 )
 
@@ -216,7 +217,17 @@ func monitor(w http.ResponseWriter, r *http.Request) {
 }
 
 func initweb(addr string) {
-   fileServer := http.FileServer(http.Dir("resources"))
+   path := "/usr/local/share/numascope"
+   _, err := os.Stat(path)
+   if err != nil {
+      path = "resources"
+      _, err := os.Stat(path)
+      if err != nil {
+         panic("/usr/local/share/numascope or resources not present")
+      }
+   }
+
+   fileServer := http.FileServer(http.Dir(path))
    http.Handle("/", fileServer)
    http.HandleFunc("/monitor", monitor)
 
