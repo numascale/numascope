@@ -2,10 +2,8 @@ const ws = new WebSocket('ws://'+location.host+'/monitor')
 const graph = document.getElementById('graph')
 let signedon = false
 let buttons = []
-let first
 
 function refresh(msg) {
-   first = new Date(msg.Timestamp)
    let data = []
 
    for (const heading of msg.Enabled) {
@@ -13,6 +11,9 @@ function refresh(msg) {
          name: heading,
          type: 'scatter',
          mode: 'lines',
+         hoverlabel: {
+            namelength: 100
+         },
          x: [],
          y: []
       })
@@ -61,7 +62,6 @@ function update(data) {
    const newerTime = time.setMinutes(time.getMinutes() + 1)
    const view = {
       xaxis: {
-         type: 'date',
          range: [olderTime, newerTime],
          rangeslider: {}
      }
