@@ -1,4 +1,5 @@
 const ws = new WebSocket('ws://'+location.host+'/monitor')
+const graph = document.getElementById('graph')
 let signedon = false
 let buttons = []
 let first
@@ -33,7 +34,7 @@ function graph(msg) {
       }
    }
 
-   Plotly.react('graph', data, layout, {displaylogo: false, responsive: true})
+   Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 }
 
 function update(data) {
@@ -66,8 +67,8 @@ function update(data) {
      }
    }
 
-   Plotly.extendTraces('graph', update, indicies)
-   Plotly.relayout('graph', view)
+   Plotly.extendTraces(graph, update, indicies)
+   Plotly.relayout(graph, view)
 }
 
 function select(info) {
