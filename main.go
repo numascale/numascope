@@ -179,6 +179,12 @@ func main() {
 
    for {
       time.Sleep(time.Duration(interval) * time.Millisecond)
+
+      // avoid wasting processor time
+      if len(connections) == 0 {
+         continue
+      }
+
       timestamp := uint64(time.Now().UnixNano() / 1e6)
       var samples []int64
 
