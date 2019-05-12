@@ -4,7 +4,7 @@ let signedon = false
 let buttons = []
 let first
 
-function graph(msg) {
+function refresh(msg) {
    first = new Date(msg.Timestamp)
    let data = []
 
@@ -130,7 +130,7 @@ ws.onmessage = function(e) {
       for (let btn of buttons)
          btn.className = data.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
 
-      graph(data)
+      refresh(data)
       return
    }
 

@@ -36,6 +36,14 @@ var (
    connections []Connection
 )
 
+func (c *Connection) WriteJSON(msg interface{}) error {
+   c.mutex.Lock()
+   err := c.socket.WriteJSON(msg)
+   c.mutex.Unlock()
+
+   return err
+}
+
 func change(c Connection) {
    msg := ChangeMessage{
       Op: "enabled",
@@ -50,9 +58,10 @@ func change(c Connection) {
       }
    }
 
-   c.mutex.Lock()
-   c.socket.WriteJSON(&msg)
-   c.mutex.Unlock()
+   err := c.WriteJSON(&msg)
+   if err != nil && *debug {
+      fmt.Println("failed writing:", err)
+   }
 }
 
 func update(timestamp uint64, samples []int64) {
@@ -63,12 +72,9 @@ func update(timestamp uint64, samples []int64) {
    }
 
    for _, c := range connections {
-      c.mutex.Lock()
-      err := c.socket.WriteJSON(&msg)
-      c.mutex.Unlock()
-
+      err := c.WriteJSON(&msg)
       if err != nil && *debug {
-         fmt.Println("failed writing: ", err)
+         fmt.Println("failed writing:", err)
       }
    }
 }
@@ -167,13 +173,10 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       }
    }
 
-   c.mutex.Lock()
-   err = c.socket.WriteJSON(&msg)
-   c.mutex.Unlock()
-
+   err = c.WriteJSON(&msg)
    if err != nil {
       if *debug {
-         fmt.Println("write:", err)
+         fmt.Println("failed writing:", err)
       }
       return
    }
