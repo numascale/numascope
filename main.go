@@ -8,10 +8,7 @@ import (
    "strconv"
    "time"
    "strings"
-)
-
-const (
-   Readings = 60 * 60 * 24 * 30
+   "golang.org/x/sys/unix"
 )
 
 var (
@@ -121,7 +118,20 @@ func dups() {
    }
 }
 
+func pin() {
+   var set unix.CPUSet
+
+   for i := 0; i < 4; i++ {
+      set.Set(i)
+   }
+
+   // attempt, so ignore errors
+   unix.SchedSetaffinity(0, &set)
+}
+
 func main() {
+   pin()
+
    flag.Parse()
 
    if os.Geteuid() != 0 {
