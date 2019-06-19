@@ -27,24 +27,12 @@ var (
    }
 )
 
-func usage() {
-   fmt.Println("usage: vmxstat [interval]")
+func usage(cmd string) {
+   fmt.Println("usage: "+cmd+" [interval]")
    os.Exit(1)
 }
 
 func vmxstat() {
-   switch {
-   case flag.NArg() == 1:
-      var err error
-      interval, err = strconv.Atoi(flag.Arg(0))
-      if err != nil {
-         usage()
-      }
-      interval *= 1000 // convert to milliseconds
-   case flag.NArg() > 1:
-      usage()
-   }
-
    if *debug {
       fmt.Printf("detected %v\n", present)
    }
@@ -171,6 +159,19 @@ func main() {
    }
 
    exe := path.Base(os.Args[0])
+
+   switch {
+   case flag.NArg() == 1:
+      var err error
+      interval, err = strconv.Atoi(flag.Arg(0))
+      if err != nil {
+         usage(exe)
+      }
+      interval *= 1000 // convert to milliseconds
+   case flag.NArg() > 1:
+      usage(exe)
+   }
+
    if exe == "vmxstat" {
       vmxstat()
       os.Exit(0)
