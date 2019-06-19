@@ -8,13 +8,14 @@ import (
    "strconv"
    "time"
    "strings"
+
    "golang.org/x/sys/unix"
 )
 
 var (
 // TODO enable advanced when there is useful discrimitation
 //   advanced   = flag.Bool("advanced", false, "list all events")
-   listenAddr = flag.String("listenAddr", "localhost:80", "web service listen address and port")
+   listenAddr = flag.String("listenAddr", "0.0.0.0:80", "web service listen address and port")
    debug      = flag.Bool("debug", false, "print debugging output")
    events     = flag.String("events", "pgfault,pgalloc_normal,pgfree,numa_local,n2VicBlkXSent,n2RdBlkXSent,n2RdBlkModSent,n2ChangeToDirtySent,n2BcastProbeCmdSent,n2RdRespSent,n2ProbeRespSent", "comma-separated list of events")
    list       = flag.Bool("list", false, "list events available on this host")
