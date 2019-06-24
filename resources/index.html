@@ -8,6 +8,14 @@
    </head>
 
    <body>
+      <div class="btn-group btn-group-toggle" data-toggle="buttons">
+         <label class="btn btn-primary active" onclick="play()">
+            <input type="radio" name="options" id="btn-play" autocomplete="off" checked> &#9654;
+         </label>
+         <label class="btn btn-primary" onclick="pause()">
+            <input type="radio" name="options" id="btn-pause" autocomplete="off"> &#9646;&#9646;
+         </label>
+      </div>
       <div id="events"></div>
       <div id="graph"></div>
 

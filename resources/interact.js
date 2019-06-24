@@ -1,7 +1,11 @@
 const ws = new WebSocket('ws://'+location.host+'/monitor')
 const graph = document.getElementById('graph')
+const btnPlay = document.getElementById('btn-play')
+const btnPause = document.getElementById('btn-pause')
+const buttons = []
 let signedon = false
-let buttons = []
+let scrolling = true
+let isocUpdate = false
 
 function refresh(msg) {
    let data = []
@@ -36,6 +40,19 @@ function refresh(msg) {
    }
 
    Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
+
+   // used to check if rangeslider should be updated or not
+   graph.on('plotly_relayout', function() {
+      if (isocUpdate)
+         isocUpdate = false
+      else {
+         scrolling = false
+         btnPlay.checked = false
+         btnPlay.parentElement.className = 'btn btn-primary'
+         btnPause.checked = true
+         btnPause.parentElement.className = 'btn btn-primary active'
+      }
+   })
 }
 
 function update(data) {
@@ -58,24 +75,29 @@ function update(data) {
       indicies.push(i)
    }
 
-   const olderTime = time.setMinutes(time.getMinutes() - 1)
-   const newerTime = time.setMinutes(time.getMinutes() + 1)
-   const view = {
-      xaxis: {
-         range: [olderTime, newerTime],
-         rangeslider: {}
-     }
-   }
-
    Plotly.extendTraces(graph, update, indicies)
-   Plotly.relayout(graph, view)
+
+   if (scrolling) {
+      const olderTime = time.setMinutes(time.getMinutes() - 1)
+      const newerTime = time.setMinutes(time.getMinutes() + 1)
+
+      const view = {
+         xaxis: {
+            range: [olderTime, newerTime],
+            rangeslider: {}
+         }
+      }
+
+      isocUpdate = true
+      Plotly.relayout(graph, 'xaxis.range', [olderTime, newerTime])
+   }
 }
 
 function select(info) {
    const msg = {
-      Op: "update",
+      Op: 'update',
       Event: info.target.innerText,
-      State: info.target.className.includes('btn-primary') ? "off" : "on"
+      State: info.target.className.includes('btn-primary') ? 'off' : 'on'
    }
 
    val = JSON.stringify(msg)
@@ -141,10 +163,14 @@ ws.onopen = function(e) {
    ws.send('463ba1974b06')
 }
 
-ws.onclose = function(e) {
-   console.log('closed')
-}
-
 ws.onerror = function(e) {
    console.log('error')
+}
+
+function play() {
+   scrolling = true
+}
+
+function pause() {
+   scrolling = false
 }
