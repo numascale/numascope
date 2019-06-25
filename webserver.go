@@ -3,6 +3,7 @@ package main
 import (
    "fmt"
    "net/http"
+   "strings"
    "sync"
    "time"
 
@@ -232,5 +233,6 @@ func initweb(addr string) {
    http.HandleFunc("/monitor", monitor)
 
    go http.ListenAndServe(addr, nil)
-   fmt.Printf("interface available at http://%v\n", addr)
+   port := strings.Split(addr, ":")[1]
+   fmt.Printf("web interface available on port %s\n", port)
 }
