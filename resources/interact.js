@@ -68,6 +68,7 @@ function label(data) {
       ay: 40
    })
 
+   isocUpdate = true
    Plotly.relayout(graph, {annotations: annotations})
 }
 
