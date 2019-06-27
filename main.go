@@ -30,7 +30,7 @@ var (
       NewNumaconnect2(),
       NewKernel(),
    }
-   fifo int
+   fifo       int
 )
 
 func usage(cmd string) {
@@ -73,7 +73,7 @@ func vmxstat() {
       validate(err)
 
       if n > 0 {
-         fmt.Printf("- %s -\n", bytes.TrimSpace(labelBuf))
+         fmt.Printf("- %s -\n", bytes.TrimSpace(labelBuf[:n]))
       }
 
       // print column headings
@@ -192,7 +192,8 @@ func main() {
    unix.Umask(0)
    unix.Mkfifo(fifoPath, 0666)
 
-   fifo, err := unix.Open(fifoPath, unix.O_RDONLY|unix.O_NONBLOCK, 0)
+   var err error
+   fifo, err = unix.Open(fifoPath, unix.O_RDONLY|unix.O_NONBLOCK, 0)
    validate(err)
 
    if exe == "vmxstat" {
