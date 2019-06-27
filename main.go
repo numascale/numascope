@@ -1,15 +1,20 @@
 package main
 
 import (
+   "bytes"
    "flag"
    "fmt"
    "os"
    "path"
    "strconv"
-   "time"
    "strings"
+   "time"
 
    "golang.org/x/sys/unix"
+)
+
+const (
+   fifoPath = "/run/numascope-label"
 )
 
 var (
@@ -25,6 +30,7 @@ var (
       NewNumaconnect2(),
       NewKernel(),
    }
+   fifo int
 )
 
 func usage(cmd string) {
@@ -57,8 +63,18 @@ func vmxstat() {
       headings[i] = sensor.Headings()
    }
 
+   labelBuf := make([]byte, 32)
+
    for {
       time.Sleep(delay)
+
+      // print any label
+      n, err := unix.Read(fifo, labelBuf)
+      validate(err)
+
+      if n > 0 {
+         fmt.Printf("- %s -\n", bytes.TrimSpace(labelBuf))
+      }
 
       // print column headings
       if line == 0 {
@@ -172,28 +188,45 @@ func main() {
       usage(exe)
    }
 
+   // expected to fail if already exists
+   unix.Umask(0)
+   unix.Mkfifo(fifoPath, 0666)
+
+   fifo, err := unix.Open(fifoPath, unix.O_RDONLY|unix.O_NONBLOCK, 0)
+   validate(err)
+
    if exe == "vmxstat" {
       vmxstat()
       os.Exit(0)
    }
 
    initweb(*listenAddr)
+   labelBuf := make([]byte, 32)
 
    for {
       time.Sleep(time.Duration(interval) * time.Millisecond)
+
+      // forward any label
+      n, err := unix.Read(fifo, labelBuf)
+      validate(err)
+
+      timestamp := uint64(time.Now().UnixNano() / 1e6)
+
+      if n > 0 {
+         broadcastLabel(timestamp, string(bytes.TrimSpace(labelBuf[:n])))
+      }
 
       // avoid wasting processor time
       if len(connections) == 0 {
          continue
       }
 
-      timestamp := uint64(time.Now().UnixNano() / 1e6)
       var samples []int64
 
       for _, sensor := range present {
          samples = append(samples, sensor.Sample()...)
       }
 
-      update(timestamp, samples)
+      broadcastData(timestamp, samples)
    }
 }

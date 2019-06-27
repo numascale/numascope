@@ -6,6 +6,7 @@ const buttons = []
 let signedon = false
 let scrolling = true
 let isocUpdate = false
+const annotations = []
 
 function refresh(msg) {
    let data = []
@@ -53,6 +54,21 @@ function refresh(msg) {
          btnPause.parentElement.className = 'btn btn-primary active'
       }
    })
+}
+
+function label(data) {
+   const time = new Date(data.Timestamp)
+
+   annotations.push({
+      x: time,
+      y: 0,
+      text: data.Label,
+      arrowhead: 3,
+      ax: 0,
+      ay: 40
+   })
+
+   Plotly.relayout(graph, {annotations: annotations})
 }
 
 function update(data) {
@@ -144,7 +160,9 @@ ws.onmessage = function(e) {
       return
    }
 
-   if (data.Op == 'enabled') {
+   if (data.Op == 'data') {
+      update(data)
+   } else if (data.Op == 'enabled') {
       // handle JSON collapsing empty array
       if (data.Enabled == null)
          data.Enabled = []
@@ -153,10 +171,12 @@ ws.onmessage = function(e) {
          btn.className = data.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
 
       refresh(data)
-      return
-   }
-
-   update(data)
+   } else if (data.Op == 'label')
+      label(data)
+   else if (data.Op == 'data')
+      update(data)
+   else
+      console.log('unknown op '+data.Op)
 }
 
 ws.onopen = function(e) {

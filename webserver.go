@@ -22,10 +22,16 @@ type ChangeMessage struct {
    Enabled   []string
 }
 
-type UpdateMessage struct {
+type DataMessage struct {
    Op        string
    Timestamp uint64
    Values    []int64
+}
+
+type LabelMessage struct {
+   Op        string
+   Timestamp uint64
+   Label     string
 }
 
 type Connection struct {
@@ -66,9 +72,24 @@ func change(c Connection) {
    }
 }
 
-func update(timestamp uint64, samples []int64) {
-   msg := UpdateMessage{
-      Op: "update",
+func broadcastLabel(timestamp uint64, label string) {
+   msg := LabelMessage{
+      Op: "label",
+      Timestamp: timestamp,
+      Label: label,
+   }
+
+   for _, c := range connections {
+      err := c.WriteJSON(&msg)
+      if err != nil && *debug {
+         fmt.Println("failed writing:", err)
+      }
+   }
+}
+
+func broadcastData(timestamp uint64, samples []int64) {
+   msg := DataMessage{
+      Op: "data",
       Timestamp: timestamp,
       Values: samples,
    }
