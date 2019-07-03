@@ -41,7 +41,7 @@ const (
 func NewNumaconnect2() *Numaconnect2 {
    return &Numaconnect2{
       events: []Event{
-         {0x000, "n2Cyc", "cycles", false},
+//         {0x000, "n2Cyc", "cycles", false},
          {0x008, "n2CycRmpeHalf", "cycles at least half of the available RMPE contexts were in use", false},
          {0x010, "n2CycRmpe0freeS", "cycles the RMPE did have free contexts for SIU accesses", false},
          {0x030, "n2CycRmpe0freeP", "cycles the RMPE did have free contexts for PIU accesses", false},
