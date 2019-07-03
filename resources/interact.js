@@ -15,7 +15,7 @@ function refresh(msg) {
    for (const heading of msg.Enabled) {
       data.push({
          name: heading,
-         type: 'scatter',
+         type: msg.Enabled.length > 20 ? 'scattergl' : 'scatter',
          mode: 'lines',
          hoverlabel: {
             namelength: 100
