@@ -7,6 +7,7 @@ let signedon = false
 let scrolling = true
 let isocUpdate = false
 const annotations = []
+let listened = false
 
 function refresh(msg) {
    let data = []
@@ -43,17 +44,21 @@ function refresh(msg) {
    Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 
    // used to check if rangeslider should be updated or not
-   graph.on('plotly_relayout', function() {
-      if (isocUpdate)
-         isocUpdate = false
-      else {
-         scrolling = false
-         btnPlay.checked = false
-         btnPlay.parentElement.className = 'btn btn-primary'
-         btnPause.checked = true
-         btnPause.parentElement.className = 'btn btn-primary active'
-      }
-   })
+   if (!listened) {
+      graph.on('plotly_relayout', function() {
+         if (isocUpdate)
+            isocUpdate = false
+         else {
+            scrolling = false
+            btnPlay.checked = false
+            btnPlay.parentElement.className = 'btn btn-primary'
+            btnPause.checked = true
+            btnPause.parentElement.className = 'btn btn-primary active'
+         }
+      })
+
+      listened = true
+   }
 }
 
 function label(data) {
