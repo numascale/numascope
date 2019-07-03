@@ -36,7 +36,7 @@ function refresh(msg) {
       legend: {
          yanchor: 'top',
          y: -0.5,
-         orientation: 'h'
+         orientation: msg.Enabled.length > 20 ? 'v' : 'h'
       }
    }
 
@@ -121,6 +121,18 @@ function select(info) {
    ws.send(val)
 }
 
+function button(name) {
+   let btn = document.createElement('button')
+   btn.onclick = select
+
+   let text = document.createTextNode(name)
+   btn.appendChild(text)
+   btn.className = 'btn btn-light btn-sm m-1'
+   buttons.push(btn)
+
+   return btn
+}
+
 function signon(data) {
    for (let i = 0; i < data.Tree.length; i++) {
       for (const key in data.Tree[i]) {
@@ -135,16 +147,11 @@ function signon(data) {
 
          elems = data.Tree[i][key]
 
-         for (const elem of elems) {
-            let btn = document.createElement('button')
-            btn.onclick = select
+         // special button to activate all events
+         subtree.appendChild(button('all'))
 
-            let text = document.createTextNode(elem)
-            btn.appendChild(text)
-            btn.className = 'btn btn-light btn-sm m-1'
-            subtree.appendChild(btn)
-            buttons.push(btn)
-         }
+         for (const elem of elems)
+            subtree.appendChild(button(elem))
 
          let container = document.querySelector('#events')
          container.appendChild(subtree)

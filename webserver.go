@@ -119,6 +119,19 @@ func state(desc string, state bool) {
       events := sensor.Events()
       sensor.Lock()
 
+      // check if 'all' button was selected
+      if desc == /*sensor.Name() +*/ "all" {
+         for i := range events {
+            events[i].enabled = true
+         }
+
+         sensor.Enable(*discrete)
+         sensor.Unlock()
+         // discard values to initialise last
+         sensor.Sample()
+         return
+      }
+
       for i := range events {
          if events[i].desc == desc {
             events[i].enabled = state
