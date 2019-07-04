@@ -213,3 +213,10 @@ function stop() {
    ws.send(JSON.stringify({Op: 'stop'}))
    stopped = true
 }
+
+function slider() {
+   val = Math.pow(2, Number(arguments[0].value))
+   arguments[0].parentElement.nextSibling.data = ' '+val+'ms'
+   msg = JSON.stringify({Op: 'interval', Value: String(val)})
+   ws.send(msg)
+}

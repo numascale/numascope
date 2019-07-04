@@ -3,6 +3,7 @@ package main
 import (
    "fmt"
    "net/http"
+   "strconv"
    "strings"
    "sync"
    "time"
@@ -255,8 +256,13 @@ func monitor(w http.ResponseWriter, r *http.Request) {
          c.stopped = true
       case "start":
          c.stopped = false
+      case "interval":
+         interval, err = strconv.Atoi(msg["Value"])
+         if err != nil {
+            fmt.Printf("undefined value %v\n", msg["Value"])
+         }
       default:
-         fmt.Printf("received unknown message %+v", msg)
+         fmt.Printf("received unknown message %+v\n", msg)
       }
    }
 }
