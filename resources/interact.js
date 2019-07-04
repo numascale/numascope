@@ -2,13 +2,24 @@ const ws = new WebSocket('ws://'+location.host+'/monitor')
 const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
+const annotations = []
 const buttons = []
 let signedon = false
 let scrolling = true
-let isocUpdate = false
-const annotations = []
 let listened = false
 let stopped = false
+
+function relayout() {
+   // if 'xaxis.range' is present and numeric, ignore automatic update
+   if (!scrolling || typeof arguments[0]['xaxis.range'] !== 'undefined' && typeof arguments[0]['xaxis.range'][0] == typeof 0)
+      return;
+
+   scrolling = false
+   btnPlay.checked = false
+   btnPlay.parentElement.className = 'btn btn-primary'
+   btnPause.checked = true
+   btnPause.parentElement.className = 'btn btn-primary active'
+}
 
 function refresh(msg) {
    let data = []
@@ -46,18 +57,7 @@ function refresh(msg) {
 
    // used to check if rangeslider should be updated or not
    if (!listened) {
-      graph.on('plotly_relayout', function() {
-         if (isocUpdate)
-            isocUpdate = false
-         else {
-            scrolling = false
-            btnPlay.checked = false
-            btnPlay.parentElement.className = 'btn btn-primary'
-            btnPause.checked = true
-            btnPause.parentElement.className = 'btn btn-primary active'
-         }
-      })
-
+      graph.on('plotly_relayout', relayout)
       listened = true
    }
 }
@@ -74,7 +74,6 @@ function label(data) {
       ay: 40
    })
 
-   isocUpdate = true
    Plotly.relayout(graph, {annotations: annotations})
 }
 
@@ -111,7 +110,6 @@ function update(data) {
          }
       }
 
-      isocUpdate = true
       Plotly.relayout(graph, 'xaxis.range', [olderTime, newerTime])
    }
 }
