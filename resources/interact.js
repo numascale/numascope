@@ -8,6 +8,7 @@ let scrolling = true
 let isocUpdate = false
 const annotations = []
 let listened = false
+let stopped = false
 
 function refresh(msg) {
    let data = []
@@ -201,9 +202,9 @@ ws.onerror = function(e) {
 }
 
 function play() {
-   if (!feed) {
+   if (stopped) {
       ws.send(JSON.stringify({Op: 'start'}))
-      feed = true
+      stopped = false
    }
 
    scrolling = true
@@ -216,5 +217,5 @@ function pause() {
 function stop() {
    scrolling = false
    ws.send(JSON.stringify({Op: 'stop'}))
-   feed = false
+   stopped = true
 }
