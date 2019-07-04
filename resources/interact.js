@@ -8,10 +8,12 @@ let signedon = false
 let scrolling = true
 let listened = false
 let stopped = false
+let timestamp = Date.now()
+let interval = 100 // milliseconds
 
 function relayout() {
-   // if 'xaxis.range' is present and numeric, ignore automatic update
-   if (!scrolling || typeof arguments[0]['xaxis.range'] !== 'undefined' && typeof arguments[0]['xaxis.range'][0] == typeof 0)
+   // if 'xaxis.range' is present and is a date, ignore automatic update
+   if (!scrolling || typeof arguments[0]['xaxis.range'] !== 'undefined' && arguments[0]['xaxis.range'][0] instanceof Date)
       return;
 
    scrolling = false
@@ -63,10 +65,8 @@ function refresh(msg) {
 }
 
 function label(data) {
-   const time = new Date(data.Timestamp)
-
    annotations.push({
-      x: time,
+      x: new Date(data.Timestamp),
       y: 0,
       text: data.Label,
       arrowhead: 3,
@@ -82,7 +82,7 @@ function update(data) {
    if (data.Values == null)
       data.Values = []
 
-   const time = new Date(data.Timestamp)
+   timestamp = data.Timestamp
 
    let update = {
       x: [],
@@ -90,6 +90,7 @@ function update(data) {
    }
 
    let indicies = []
+   const time = new Date(timestamp)
 
    for (let i = 0; i < data.Values.length; i++) {
       update.x.push([time])
@@ -98,20 +99,13 @@ function update(data) {
    }
 
    Plotly.extendTraces(graph, update, indicies)
+}
 
-   if (scrolling) {
-      const olderTime = time.setMinutes(time.getMinutes() - 1)
-      const newerTime = time.setMinutes(time.getMinutes() + 1)
+function scroll() {
+   if (scrolling)
+      Plotly.relayout(graph, 'xaxis.range', [new Date(timestamp-60000), new Date(timestamp)])
 
-      const view = {
-         xaxis: {
-            range: [olderTime, newerTime],
-            rangeslider: {}
-         }
-      }
-
-      Plotly.relayout(graph, 'xaxis.range', [olderTime, newerTime])
-   }
+   timestamp += interval
 }
 
 function select(info) {
@@ -198,6 +192,8 @@ ws.onopen = function(e) {
 ws.onerror = function(e) {
    console.log('error')
 }
+
+setInterval(scroll, interval)
 
 function play() {
    if (stopped) {
