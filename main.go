@@ -132,6 +132,7 @@ func pin() {
 
    // attempt, so ignore errors
    unix.SchedSetaffinity(0, &set)
+   unix.Setpriority(unix.PRIO_PROCESS, 0, -7)
 }
 
 func main() {
