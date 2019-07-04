@@ -35,13 +35,14 @@ type LabelMessage struct {
 }
 
 type Connection struct {
-   socket *websocket.Conn
-   mutex  *sync.Mutex
+   socket  *websocket.Conn
+   mutex   *sync.Mutex
+   stopped bool
 }
 
 var (
    upgrader = websocket.Upgrader{}
-   connections []Connection
+   connections []*Connection
 )
 
 func (c *Connection) WriteJSON(msg interface{}) error {
@@ -95,7 +96,12 @@ func broadcastData(timestamp uint64, samples []int64) {
    }
 
    for _, c := range connections {
+      if c.stopped {
+         continue
+      }
+
       err := c.WriteJSON(&msg)
+
       if err != nil && *debug {
          fmt.Println("failed writing:", err)
       }
@@ -161,7 +167,7 @@ func toggle(desc string, val string) {
 
    // update all clients
    for _, c := range connections {
-      change(c)
+      change(*c)
    }
 }
 
@@ -224,7 +230,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    }
 
    change(c);
-   connections = append(connections, c)
+   connections = append(connections, &c)
 
    for {
       var msg map[string]string
@@ -245,6 +251,10 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       switch msg["Op"] {
       case "update":
          toggle(msg["Event"], msg["State"])
+      case "stop":
+         c.stopped = true
+      case "start":
+         c.stopped = false
       default:
          fmt.Printf("received unknown message %+v", msg)
       }

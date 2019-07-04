@@ -201,9 +201,20 @@ ws.onerror = function(e) {
 }
 
 function play() {
+   if (!feed) {
+      ws.send(JSON.stringify({Op: 'start'}))
+      feed = true
+   }
+
    scrolling = true
 }
 
 function pause() {
    scrolling = false
+}
+
+function stop() {
+   scrolling = false
+   ws.send(JSON.stringify({Op: 'stop'}))
+   feed = false
 }
