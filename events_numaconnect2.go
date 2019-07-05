@@ -298,7 +298,7 @@ func (d *Numaconnect2) Sample() []int64 {
          sample := delta * 200000000 / interval // clockcycles @ 200MHz
 
          if d.discrete {
-            samples[n*len(d.events)+i] = int64(sample)
+            samples[n*d.nEnabled+i] = int64(sample)
          } else {
             // sum totals for average
             samples[i] += int64(sample)
