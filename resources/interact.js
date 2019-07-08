@@ -132,6 +132,10 @@ function button(name) {
 }
 
 function signon(data) {
+   const elem = document.getElementById('data-interval')
+   elem.parentElement.nextSibling.data = ' '+data.Interval+'ms'
+   elem.value = Math.log2(data.Interval)
+
    for (let i = 0; i < data.Tree.length; i++) {
       for (const key in data.Tree[i]) {
          if (!data.Tree[i].hasOwnProperty(key))
@@ -215,8 +219,8 @@ function stop() {
 }
 
 function slider() {
-   val = Math.pow(2, Number(arguments[0].value))
+   const val = Math.pow(2, Number(arguments[0].value))
    arguments[0].parentElement.nextSibling.data = ' '+val+'ms'
-   msg = JSON.stringify({Op: 'interval', Value: String(val)})
+   const msg = JSON.stringify({Op: 'interval', Value: String(val)})
    ws.send(msg)
 }
