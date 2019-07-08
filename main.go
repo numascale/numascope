@@ -33,11 +33,6 @@ var (
    fifo       int
 )
 
-func usage(cmd string) {
-   fmt.Println("usage: "+cmd+" [interval]")
-   os.Exit(1)
-}
-
 func vmxstat() {
    if *debug {
       fmt.Printf("detected %v\n", present)
@@ -182,11 +177,13 @@ func main() {
       var err error
       interval, err = strconv.Atoi(flag.Arg(0))
       if err != nil {
-         usage(exe)
+         flag.Usage()
+         os.Exit(1)
       }
       interval *= 1000 // convert to milliseconds
    case flag.NArg() > 1:
-      usage(exe)
+      flag.Usage()
+      os.Exit(1)
    }
 
    // expected to fail if already exists
