@@ -13,13 +13,14 @@ import (
 )
 
 type SignonMessage struct {
-   Interval int
    Tree     []map[string][]string
 }
 
 type ChangeMessage struct {
    Op        string
    Timestamp uint64
+   Interval int
+   Discrete  bool
    Enabled   []string
 }
 
@@ -47,6 +48,10 @@ var (
 )
 
 func (c *Connection) WriteJSON(msg interface{}) error {
+   if *debug {
+      fmt.Printf("-> %+v\n", msg)
+   }
+
    c.mutex.Lock()
    err := c.socket.WriteJSON(msg)
    c.mutex.Unlock()
@@ -58,6 +63,8 @@ func change(c Connection) {
    msg := ChangeMessage{
       Op: "enabled",
       Timestamp: uint64(time.Now().UnixNano() / 1e6),
+      Interval: interval,
+      Discrete: *discrete,
    }
 
    for _, sensor := range present {
@@ -206,7 +213,6 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    }
 
    msg := SignonMessage{
-      Interval: interval,
       Tree: make([]map[string][]string, len(present)),
    }
 
@@ -256,6 +262,13 @@ func monitor(w http.ResponseWriter, r *http.Request) {
          c.stopped = true
       case "start":
          c.stopped = false
+      case "averaging":
+         *discrete = msg["Value"] == "false"
+         Activate()
+
+         for _, c2 := range connections {
+            change(*c2)
+         }
       case "interval":
          interval, err = strconv.Atoi(msg["Value"])
          if err != nil {

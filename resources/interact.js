@@ -1,15 +1,27 @@
-const ws = new WebSocket('ws://'+location.host+'/monitor')
 const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
 const annotations = []
 const buttons = []
+let socket
 let signedon = false
 let scrolling = true
 let listened = false
 let stopped = false
+let discrete = false
 let timestamp = Date.now()
 let interval = 100 // milliseconds
+
+function connect() {
+   socket = new WebSocket('ws://'+location.host+'/monitor')
+   socket.onmessage = receive
+   socket.onopen = function(e) {
+      socket.send('463ba1974b06')
+   }
+   socket.onerror = function(e) {
+      console.log('error')
+   }
+}
 
 function relayout() {
    // if 'xaxis.range' is present and is a date, ignore automatic update
@@ -23,20 +35,43 @@ function relayout() {
    btnPause.parentElement.className = 'btn btn-primary active'
 }
 
-function refresh(msg) {
-   let data = []
+function enabled(msg) {
+   var elem = document.getElementById('data-interval')
+   elem.parentElement.nextSibling.data = ' '+msg.Interval+'ms'
+   elem.value = Math.log2(msg.Interval)
 
+   var elem = document.getElementById('averaging')
+   discrete = msg.Discrete
+   elem.checked = !discrete
+
+   // handle JSON collapsing empty array
+   if (msg.Enabled == null)
+      msg.Enabled = []
+
+   for (let btn of buttons)
+      btn.className = msg.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
+
+   let data = []
    for (const heading of msg.Enabled) {
-      data.push({
-         name: heading,
-         type: msg.Enabled.length > 20 ? 'scattergl' : 'scatter',
-         mode: 'lines',
-         hoverlabel: {
-            namelength: 100
-         },
-         x: [],
-         y: []
-      })
+      if (discrete) {
+         for (let i = 0; i < 6; i++) {
+            data.push({
+               name: heading+':'+i,
+               type: msg.Enabled.length > 20 ? 'scattergl' : 'scatter',
+               mode: 'lines',
+               hoverlabel: {namelength: 100},
+               x: [], y: []
+            })
+         }
+      } else {
+         data.push({
+            name: heading,
+            type: msg.Enabled.length > 20 ? 'scattergl' : 'scatter',
+            mode: 'lines',
+            hoverlabel: {namelength: 100},
+            x: [], y: []
+         })
+      }
    }
 
    const layout = {
@@ -60,6 +95,7 @@ function refresh(msg) {
    // used to check if rangeslider should be updated or not
    if (!listened) {
       graph.on('plotly_relayout', relayout)
+      setInterval(scroll, interval)
       listened = true
    }
 }
@@ -102,7 +138,7 @@ function update(data) {
 }
 
 function scroll() {
-   if (scrolling)
+   if (scrolling && listened)
       Plotly.relayout(graph, 'xaxis.range', [new Date(timestamp-60000), new Date(timestamp)])
 
    timestamp += interval
@@ -116,7 +152,7 @@ function select(info) {
    }
 
    val = JSON.stringify(msg)
-   ws.send(val)
+   socket.send(val)
 }
 
 function button(name) {
@@ -132,10 +168,6 @@ function button(name) {
 }
 
 function signon(data) {
-   const elem = document.getElementById('data-interval')
-   elem.parentElement.nextSibling.data = ' '+data.Interval+'ms'
-   elem.value = Math.log2(data.Interval)
-
    for (let i = 0; i < data.Tree.length; i++) {
       for (const key in data.Tree[i]) {
          if (!data.Tree[i].hasOwnProperty(key))
@@ -161,7 +193,7 @@ function signon(data) {
    }
 }
 
-ws.onmessage = function(e) {
+function receive(e) {
    let data = JSON.parse(e.data)
 
    if (signedon == false) {
@@ -173,35 +205,18 @@ ws.onmessage = function(e) {
    if (data.Op == 'data') {
       update(data)
    } else if (data.Op == 'enabled') {
-      // handle JSON collapsing empty array
-      if (data.Enabled == null)
-         data.Enabled = []
-
-      for (let btn of buttons)
-         btn.className = data.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
-
-      refresh(data)
+      enabled(data)
    } else if (data.Op == 'label')
       label(data)
    else if (data.Op == 'data')
       update(data)
    else
-      console.log('unknown op '+data.Op)
+      console.log('unknown op '+data)
 }
-
-ws.onopen = function(e) {
-   ws.send('463ba1974b06')
-}
-
-ws.onerror = function(e) {
-   console.log('error')
-}
-
-setInterval(scroll, interval)
 
 function play() {
    if (stopped) {
-      ws.send(JSON.stringify({Op: 'start'}))
+      socket.send(JSON.stringify({Op: 'start'}))
       stopped = false
    }
 
@@ -214,7 +229,7 @@ function pause() {
 
 function stop() {
    scrolling = false
-   ws.send(JSON.stringify({Op: 'stop'}))
+   socket.send(JSON.stringify({Op: 'stop'}))
    stopped = true
 }
 
@@ -222,5 +237,13 @@ function slider() {
    const val = Math.pow(2, Number(arguments[0].value))
    arguments[0].parentElement.nextSibling.data = ' '+val+'ms'
    const msg = JSON.stringify({Op: 'interval', Value: String(val)})
-   ws.send(msg)
+   socket.send(msg)
 }
+
+function averaging() {
+   const val = arguments[0].checked
+   const msg = JSON.stringify({Op: 'averaging', Value: String(val)})
+   socket.send(msg)
+}
+
+connect()

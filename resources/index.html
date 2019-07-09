@@ -20,6 +20,10 @@
       </div>
       <div>
          <label>Data interval <input type="range" class="custom-range" min="0" max="16" value="7" id="data-interval" oninput="slider(this)" style="width: 150px;vertical-align: middle"></label> 128ms</div>
+      <div class="form-check">
+         <input type="checkbox" class="form-check-input" id="averaging" checked onclick="averaging(this)">
+         <label class="form-check-label">averaging over all servers</label>
+      </div>
       <div id="events"></div>
       <div id="graph"></div>
 

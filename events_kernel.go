@@ -153,6 +153,10 @@ func (d *Kernel) Present() bool {
    return true
 }
 
+func (d *Kernel) Sources() uint {
+   return 1
+}
+
 func (d *Kernel) Name() string {
    return "kernel VMstat"
 }

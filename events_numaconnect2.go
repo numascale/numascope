@@ -202,6 +202,10 @@ func (d *Numaconnect2) Present() bool {
    return true
 }
 
+func (d *Numaconnect2) Sources() uint {
+   return uint(len(d.cards))
+}
+
 func (d *Numaconnect2) Name() string {
    return "Numascale NumaConnect2"
 }

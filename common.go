@@ -18,6 +18,7 @@ type Sensor interface {
    // checks if sensor is present
    Present() bool
    Name() string
+   Sources() uint
    // scans through and activates enabled events, and if discrete
    Enable(discrete bool)
    Lock()

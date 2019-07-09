@@ -130,6 +130,12 @@ func pin() {
    unix.Setpriority(unix.PRIO_PROCESS, 0, -7)
 }
 
+func Activate() {
+   for _, sensor := range present {
+      sensor.Enable(*discrete)
+   }
+}
+
 func main() {
    pin()
 
@@ -161,9 +167,9 @@ func main() {
             }
          }
       }
-
-      sensor.Enable(*discrete)
    }
+
+   Activate()
 
    if total == 0 {
       fmt.Println("no matching events")
