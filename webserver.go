@@ -13,7 +13,7 @@ import (
 )
 
 type SignonMessage struct {
-   Tree     []map[string][]string
+   Tree     map[string][]string
 }
 
 type ChangeMessage struct {
@@ -213,18 +213,19 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    }
 
    msg := SignonMessage{
-      Tree: make([]map[string][]string, len(present)),
+      Tree: make(map[string][]string, len(present)),
    }
 
-   for i, sensor := range present {
-      msg.Tree[i] = make(map[string][]string)
+   msg.Tree = make(map[string][]string)
+
+   for _, sensor := range present {
       name := sensor.Name()
       events := sensor.Events()
 
-      msg.Tree[i][name] = make([]string, len(events))
+      msg.Tree[name] = make([]string, len(events))
 
       for j, val := range events {
-         msg.Tree[i][name][j] = val.desc
+         msg.Tree[name][j] = val.desc
       }
    }
 

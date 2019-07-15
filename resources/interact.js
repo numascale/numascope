@@ -55,6 +55,7 @@ function enabled(msg) {
       btn.className = msg.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
 
    let data = []
+
    for (const heading of msg.Enabled) {
       if (discrete) {
          for (let i = 0; i < 6; i++) {
@@ -174,28 +175,22 @@ function signon(data) {
    $('#connecting').hide()
    $('#loading').hide()
 
-   for (let i = 0; i < data.Tree.length; i++) {
-      for (const key in data.Tree[i]) {
-         if (!data.Tree[i].hasOwnProperty(key))
-            continue
+    for (const key in data.Tree) {
+      subtree = document.createElement('details')
+      let node = document.createElement('summary')
+      subtree.appendChild(node)
+      let text = document.createTextNode(key+' metrics')
+      node.appendChild(text)
+      elems = data.Tree[key]
 
-         subtree = document.createElement('details')
-         let node = document.createElement('summary')
-         subtree.appendChild(node)
-         let text = document.createTextNode(key+' metrics')
-         node.appendChild(text)
+      // special button to activate all events
+      subtree.appendChild(button('all'))
 
-         elems = data.Tree[i][key]
+      for (const elem of elems)
+         subtree.appendChild(button(elem))
 
-         // special button to activate all events
-         subtree.appendChild(button('all'))
-
-         for (const elem of elems)
-            subtree.appendChild(button(elem))
-
-         let container = document.querySelector('#events')
-         container.appendChild(subtree)
-      }
+      let container = document.querySelector('#events')
+      container.appendChild(subtree)
    }
 }
 
