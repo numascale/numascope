@@ -4,7 +4,7 @@ const btnPause = document.getElementById('btn-pause')
 const annotations = []
 const buttons = []
 let socket
-let signedon = false
+let signedon
 let scrolling = true
 let listened = false
 let stopped = false
@@ -14,12 +14,15 @@ let interval = 100 // milliseconds
 
 function connect() {
    socket = new WebSocket('ws://'+location.host+'/monitor')
+
    socket.onmessage = receive
    socket.onopen = function(e) {
+      signedon = false
       socket.send('463ba1974b06')
    }
-   socket.onerror = function(e) {
-      console.log('error')
+
+   socket.onclose = function(e) {
+      $('#connecting').show()
    }
 }
 
@@ -57,7 +60,7 @@ function enabled(msg) {
          for (let i = 0; i < 6; i++) {
             data.push({
                name: heading+':'+i,
-               type: msg.Enabled.length > 20 ? 'scattergl' : 'scatter',
+               type: (msg.Enabled.length * (discrete ? 6 : 1)) > 20 ? 'scattergl' : 'scatter',
                mode: 'lines',
                hoverlabel: {namelength: 100},
                x: [], y: []
@@ -168,6 +171,9 @@ function button(name) {
 }
 
 function signon(data) {
+   $('#connecting').hide()
+   $('#loading').hide()
+
    for (let i = 0; i < data.Tree.length; i++) {
       for (const key in data.Tree[i]) {
          if (!data.Tree[i].hasOwnProperty(key))
@@ -208,8 +214,6 @@ function receive(e) {
       enabled(data)
    } else if (data.Op == 'label')
       label(data)
-   else if (data.Op == 'data')
-      update(data)
    else
       console.log('unknown op '+data)
 }

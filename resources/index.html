@@ -12,6 +12,14 @@
    <script src="interact.js" defer></script>
 </head>
 <body>
+<div class="alert alert-info fade show" role="alert" id="loading">
+Loading model...
+</div>
+<div class="alert alert-warning fade show" style="display: none; overflow: auto;" role="alert" id="connecting">
+   Connection lost
+   <a class="btn btn-sm btn-warning float-right my-auto" style="vertical-align: middle" onclick="connect()">Reconnect</a>
+</div>
+
 <div class="container" style="margin: 15px 0px 15px 0px">
    <div class="row text-center">
    <div class="col-sm-2 btn-group btn-group-toggle" data-toggle="buttons">
