@@ -1,36 +1,39 @@
 <!doctype html>
 <html lang="en">
-   <head>
-      <meta charset="utf-8">
-      <link rel="stylesheet" href="bootstrap.min.css">
-      <title>Numascope</title>
-   </head>
-
-   <body>
-      <div class="btn-group btn-group-toggle" data-toggle="buttons">
-         <label class="btn btn-primary active" onclick="play()">
-            <input type="radio" name="options" id="btn-play" autocomplete="off" checked> &#9654;
-         </label>
-         <label class="btn btn-primary" onclick="pause()">
-            <input type="radio" name="options" id="btn-pause" autocomplete="off"> &#9646;&#9646;
-         </label>
-         <label class="btn btn-primary" onclick="stop()">
-            <input type="radio" name="options" id="btn-stop" autocomplete="off"> &#9724;
-         </label>
-      </div>
-      <div>
-         <label>Data interval <input type="range" class="custom-range" min="0" max="16" value="7" id="data-interval" oninput="slider(this)" style="width: 150px;vertical-align: middle"></label> 128ms</div>
-      <div class="form-check">
-         <input type="checkbox" class="form-check-input" id="averaging" checked onclick="averaging(this)">
-         <label class="form-check-label">averaging over all servers</label>
-      </div>
-      <div id="events"></div>
-      <div id="graph"></div>
-
-      <script src="jquery.slim.min.js"></script>
-      <script src="popper.min.js"></script>
-      <script src="bootstrap.min.js"></script>
-      <script src="plotly.min.js"></script>
-      <script src="interact.js"></script>
-   </body>
+<head>
+   <title>Numascope</title>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <link rel="stylesheet" href="bootstrap.min.css">
+   <script src="jquery.min.js"></script>
+   <script src="popper.min.js"></script>
+   <script src="bootstrap.min.js"></script>
+   <script src="plotly.min.js" defer></script>
+   <script src="interact.js" defer></script>
+</head>
+<body>
+<div class="container" style="margin: 15px 0px 15px 0px">
+   <div class="row text-center">
+   <div class="col-sm-2 btn-group btn-group-toggle" data-toggle="buttons">
+      <label class="btn btn-primary active" onclick="play()">
+         <input type="radio" name="options" id="btn-play" autocomplete="off" checked> &#9654;
+      </label>
+      <label class="btn btn-primary" onclick="pause()">
+         <input type="radio" name="options" id="btn-pause" autocomplete="off"> &#9646;&#9646;
+      </label>
+      <label class="btn btn-primary" onclick="stop()">
+         <input type="radio" name="options" id="btn-stop" autocomplete="off"> &#9724;
+      </label>
+   </div>
+   <div class="col-sm-6">
+      <label>Data interval <input type="range" class="custom-range" min="0" max="16" value="7" id="data-interval" oninput="slider(this)" style="width: 150px;vertical-align: middle"></label> 128ms</div>
+   <div class="col-sm-4 custom-control custom-switch">
+      <input type="checkbox" checked class="custom-control-input" id="averaging" onclick="averaging(this)">
+      <label class="custom-control-label" for="customSwitch4">averaging over all servers</label>
+   </div>
+   </div>
+   <div id="events"></div>
+</div>
+<div id="graph"></div>
+</body>
 </html>
