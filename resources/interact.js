@@ -224,6 +224,11 @@ function play() {
 }
 
 function pause() {
+   if (stopped) {
+      socket.send(JSON.stringify({Op: 'start'}))
+      stopped = false
+   }
+
    scrolling = false
 }
 
