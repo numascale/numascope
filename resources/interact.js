@@ -5,6 +5,7 @@ const annotations = []
 const buttons = []
 let socket
 let signedon
+let sources
 let scrolling = true
 let listened = false
 let stopped = false
@@ -24,6 +25,15 @@ function connect() {
    socket.onclose = function(e) {
       $('#connecting').show()
    }
+}
+
+function subset(set, val) {
+   for (const sensor in set) {
+      if (set[sensor].includes(val))
+         return true
+   }
+
+   return false
 }
 
 function relayout() {
@@ -47,34 +57,32 @@ function enabled(msg) {
    discrete = msg.Discrete
    elem.checked = !discrete
 
-   // handle JSON collapsing empty array
-   if (msg.Enabled == null)
-      msg.Enabled = []
-
    for (let btn of buttons)
-      btn.className = msg.Enabled.includes(btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
+      btn.className = subset(msg.Enabled, btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
 
    let data = []
 
-   for (const heading of msg.Enabled) {
-      if (discrete) {
-         for (let i = 0; i < 6; i++) {
+   for (const sensor in msg.Enabled) {
+      for (const heading of msg.Enabled[sensor]) {
+         if (discrete && sources[sensor] > 1) {
+            for (let i = 0; i < sources[sensor]; i++) {
+               data.push({
+                  name: heading+':'+i,
+                  type: (msg.Enabled.length * (discrete ? 6 : 1)) > 20 ? 'scattergl' : 'scatter',
+                  mode: 'lines',
+                  hoverlabel: {namelength: 100},
+                  x: [], y: []
+               })
+            }
+         } else {
             data.push({
-               name: heading+':'+i,
-               type: (msg.Enabled.length * (discrete ? 6 : 1)) > 20 ? 'scattergl' : 'scatter',
+               name: heading,
+               type: msg.Enabled.length > 20 ? 'scattergl' : 'scatter',
                mode: 'lines',
                hoverlabel: {namelength: 100},
                x: [], y: []
             })
          }
-      } else {
-         data.push({
-            name: heading,
-            type: msg.Enabled.length > 20 ? 'scattergl' : 'scatter',
-            mode: 'lines',
-            hoverlabel: {namelength: 100},
-            x: [], y: []
-         })
       }
    }
 
@@ -175,7 +183,9 @@ function signon(data) {
    $('#connecting').hide()
    $('#loading').hide()
 
-    for (const key in data.Tree) {
+   sources = data.Sources
+
+   for (const key in data.Tree) {
       subtree = document.createElement('details')
       let node = document.createElement('summary')
       subtree.appendChild(node)

@@ -14,6 +14,7 @@ import (
 
 type SignonMessage struct {
    Tree     map[string][]string
+   Sources  map[string]uint
 }
 
 type ChangeMessage struct {
@@ -21,7 +22,7 @@ type ChangeMessage struct {
    Timestamp uint64
    Interval int
    Discrete  bool
-   Enabled   []string
+   Enabled   map[string][]string
 }
 
 type DataMessage struct {
@@ -65,12 +66,17 @@ func change(c Connection) {
       Timestamp: uint64(time.Now().UnixNano() / 1e6),
       Interval: interval,
       Discrete: *discrete,
+      Enabled: make(map[string][]string),
    }
 
+   // structure events into hashmap
    for _, sensor := range present {
+      name := sensor.Name()
+      msg.Enabled[name] = make([]string, 0, 16)
+
       for _, event := range sensor.Events() {
          if event.enabled {
-            msg.Enabled = append(msg.Enabled, event.desc)
+            msg.Enabled[name] = append(msg.Enabled[name], event.desc)
          }
       }
    }
@@ -214,6 +220,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
 
    msg := SignonMessage{
       Tree: make(map[string][]string, len(present)),
+      Sources: make(map[string]uint, len(present)),
    }
 
    msg.Tree = make(map[string][]string)
@@ -223,9 +230,10 @@ func monitor(w http.ResponseWriter, r *http.Request) {
       events := sensor.Events()
 
       msg.Tree[name] = make([]string, len(events))
+      msg.Sources[name] = sensor.Sources()
 
-      for j, val := range events {
-         msg.Tree[name][j] = val.desc
+      for i, val := range events {
+         msg.Tree[name][i] = val.desc
       }
    }
 
