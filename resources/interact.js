@@ -190,6 +190,11 @@ function signon(data) {
    $('#loading').hide()
 
    sources = data.Sources
+   const container = document.querySelector('#events')
+
+   // remove any pre-existing sources from last session
+   while (container.firstChild)
+      container.removeChild(container.firstChild)
 
    for (const key in data.Tree) {
       subtree = document.createElement('details')
@@ -205,7 +210,6 @@ function signon(data) {
       for (const elem of elems)
          subtree.appendChild(button(elem))
 
-      let container = document.querySelector('#events')
       container.appendChild(subtree)
    }
 }
