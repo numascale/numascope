@@ -60,13 +60,12 @@ function enabled(msg) {
    for (let btn of buttons)
       btn.className = subset(msg.Enabled, btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
 
+   let data = []
    let total = 0
 
    for (const sensor in msg.Enabled)
       total += msg.Enabled[sensor].length * (discrete ? sources[sensor] : 1)
 
-   const type = total > 20  ? 'scattergl' : 'scatter'
-   let data = []
 
    for (const sensor in msg.Enabled) {
       for (const heading of msg.Enabled[sensor]) {
@@ -74,7 +73,7 @@ function enabled(msg) {
             for (let i = 0; i < sources[sensor]; i++) {
                data.push({
                   name: heading+':'+i,
-                  type: type,
+                  type: total > 20  ? 'scattergl' : 'scatter',
                   mode: 'lines',
                   hoverlabel: {namelength: 100},
                   x: [], y: []
@@ -83,7 +82,7 @@ function enabled(msg) {
          } else {
             data.push({
                name: heading,
-               type: type,
+               type: total > 20  ? 'scattergl' : 'scatter',
                mode: 'lines',
                hoverlabel: {namelength: 100},
                x: [], y: []
@@ -104,7 +103,7 @@ function enabled(msg) {
       legend: {
          yanchor: 'top',
          y: -0.5,
-         orientation: msg.Enabled.length > 20 ? 'v' : 'h'
+         orientation: total > 20 ? 'v' : 'h'
       }
    }
 
