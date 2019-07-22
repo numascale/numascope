@@ -38,7 +38,7 @@ function subset(set, val) {
 
 function relayout() {
    // if 'xaxis.range' is present and is a date, ignore automatic update
-   if (!scrolling || typeof arguments[0]['xaxis.range'] !== 'undefined' && arguments[0]['xaxis.range'][0] instanceof Date)
+   if (!scrolling || typeof arguments[0]['xaxis.range'] !== 'undefined' && arguments[0]['xaxis.range'][0] instanceof Date || arguments[0]['autosize'] !== 'undefined')
       return;
 
    scrolling = false
