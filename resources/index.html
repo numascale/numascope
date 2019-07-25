@@ -33,11 +33,14 @@ Loading model...
          <input type="radio" name="options" id="btn-stop" autocomplete="off"> &#9724;
       </label>
    </div>
-   <div class="col-sm-6">
+   <div class="col-sm-5">
       <label>Data interval <input type="range" class="custom-range" min="0" max="16" value="7" id="data-interval" oninput="slider(this)" style="width: 150px;vertical-align: middle"></label> 128ms</div>
-   <div class="col-sm-4 custom-control custom-switch">
+   <div class="col-sm-3 custom-control custom-switch">
       <input type="checkbox" checked class="custom-control-input" id="averaging" onclick="averaging(this)">
       <label class="custom-control-label" for="averaging">averaging over all servers</label>
+   </div>
+   <div class="col-sm-2">
+      <button type="button" class="btn btn-primary btn-sm" style="margin-right: 0px" onclick="load()">load</button>
    </div>
    </div>
    <div id="events"></div>

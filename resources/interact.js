@@ -286,4 +286,12 @@ function averaging() {
    socket.send(msg)
 }
 
-connect()
+if (location.host == '') {
+  document.getElementById('btn-play').parentElement.className += ' disabled'
+  document.getElementById('btn-pause').parentElement.className += ' disabled'
+  document.getElementById('btn-stop').parentElement.className += ' disabled'
+  document.getElementById('averaging').disabled = true
+  document.getElementById('data-interval').disabled = true
+  document.getElementById('loading').innerHTML = 'Standalone mode'
+} else
+   connect()
