@@ -40,7 +40,9 @@ Loading model...
       <label class="custom-control-label" for="averaging">averaging over all servers</label>
    </div>
    <div class="col-sm-2">
-      <button type="button" class="btn btn-primary btn-sm" style="margin-right: 0px" onclick="load()">load</button>
+    <label class="btn btn-primary btn-sm" onchange="load(childNodes[1].files[0])">
+        Load <input type="file" style="display: none">
+    </label>
    </div>
    </div>
    <div id="events"></div>

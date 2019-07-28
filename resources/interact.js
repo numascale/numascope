@@ -83,7 +83,6 @@ function enabled(msg) {
    for (const sensor in msg.Enabled)
       total += msg.Enabled[sensor].length * (discrete ? sources[sensor] : 1)
 
-
    for (const sensor in msg.Enabled) {
       for (const heading of msg.Enabled[sensor]) {
          if (discrete && sources[sensor] > 1) {
@@ -92,7 +91,7 @@ function enabled(msg) {
                   name: heading+':'+i,
                   type: total > 20  ? 'scattergl' : 'scatter',
                   mode: 'lines',
-                  hoverlabel: {namelength: 100},
+                  hoverlabel: {namelength: 50},
                   x: [], y: []
                })
             }
@@ -101,7 +100,7 @@ function enabled(msg) {
                name: heading,
                type: total > 20  ? 'scattergl' : 'scatter',
                mode: 'lines',
-               hoverlabel: {namelength: 100},
+               hoverlabel: {namelength: 50},
                x: [], y: []
             })
          }
@@ -124,7 +123,7 @@ function enabled(msg) {
       }
    }
 
-   Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
+   Plotly.react(graph, data, layout, {displaylogo: false})
 
    // used to check if rangeslider should be updated or not
    if (!listened) {
@@ -189,13 +188,17 @@ function select(info) {
    socket.send(val)
 }
 
-function button(name) {
+function button(name, on) {
    let btn = document.createElement('button')
    btn.onclick = select
 
    let text = document.createTextNode(name)
    btn.appendChild(text)
    btn.className = 'btn btn-light btn-sm m-1'
+
+   if (on)
+      btn.className += ' btn-primary'
+
    buttons.push(btn)
 
    return btn
@@ -221,10 +224,10 @@ function signon(data) {
       elems = data.Tree[key]
 
       // special button to activate all events
-      subtree.appendChild(button('all'))
+      subtree.appendChild(button('all', false))
 
       for (const elem of elems)
-         subtree.appendChild(button(elem))
+         subtree.appendChild(button(elem, false))
 
       container.appendChild(subtree)
    }
@@ -284,6 +287,78 @@ function averaging() {
    const val = arguments[0].checked
    const msg = JSON.stringify({Op: 'averaging', Value: String(val)})
    socket.send(msg)
+}
+
+function parse(file) {
+   let json
+
+   try {
+      json = JSON.parse(file.target.result)
+   } catch (e) {
+      alert('Only valid JSON input supported')
+   }
+
+   const data = []
+   const total = json[0].length
+   const container = document.querySelector('#events')
+
+   // remove any pre-existing sources from last session
+   while (container.firstChild)
+      container.removeChild(container.firstChild)
+
+   subtree = document.createElement('details')
+   const node = document.createElement('summary')
+   subtree.appendChild(node)
+   const text = document.createTextNode('UNC3 metrics')
+   node.appendChild(text)
+
+   // special button to activate all events
+   subtree.appendChild(button('all', false))
+
+   for (const heading of json[0]) {
+      data.push({
+         name: heading,
+         type: total > 20  ? 'scattergl' : 'scatter',
+         mode: 'lines',
+         hoverlabel: {namelength: 50},
+         x: [], y: []
+      })
+
+      subtree.appendChild(button(heading, true))
+   }
+
+   container.appendChild(subtree)
+
+   for (let row = 1; row < json.length; row++) {
+      for (let col = 1; col < json[0].length; col++) {
+         data[col].x.push(json[row][0])
+         data[col].y.push(json[row][col])
+      }
+   }
+
+   const layout = {
+      autosize: true,
+      height: 700,
+      xaxis: {
+         rangeslider: {}
+      },
+      yaxis: {
+         title: 'events'
+      },
+      legend: {
+         yanchor: 'top',
+         y: -0.5,
+         orientation: total > 20 ? 'v' : 'h'
+      }
+   }
+
+   Plotly.react(graph, data, layout, {displaylogo: false})
+}
+
+function load(file) {
+   const reader = new FileReader()
+   reader.onload = parse
+   reader.readAsText(file)
 }
 
 if (location.host == '') {
