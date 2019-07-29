@@ -309,29 +309,31 @@ function parse(file) {
    subtree = document.createElement('details')
    const node = document.createElement('summary')
    subtree.appendChild(node)
-   const text = document.createTextNode('UNC3 metrics')
+   const text = document.createTextNode(json[0][0]+' metrics')
    node.appendChild(text)
 
    // special button to activate all events
    subtree.appendChild(button('all', false))
 
-   for (const heading of json[0]) {
+   for (let col = 1; col < json[0].length; col++) {
       data.push({
-         name: heading,
+         name: json[0][col],
          type: total > 20  ? 'scattergl' : 'scatter',
          mode: 'lines',
          hoverlabel: {namelength: 50},
          x: [], y: []
       })
 
-      subtree.appendChild(button(heading, true))
+      subtree.appendChild(button(json[0][col], true))
    }
 
    container.appendChild(subtree)
 
    for (let row = 1; row < json.length; row++) {
-      for (let col = 1; col < json[0].length; col++) {
-         data[col].x.push(json[row][0])
+      const time = new Date(json[row][0]/1000)
+
+      for (let col = 1; col < json[0].length-1; col++) {
+         data[col].x.push(time)
          data[col].y.push(json[row][col])
       }
    }
