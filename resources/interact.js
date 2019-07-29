@@ -147,27 +147,26 @@ function label(data) {
 }
 
 function update(data) {
-   // handle JSON collapsing empty array
-   if (data.Values == null)
-      data.Values = []
+   const indicies = []
+   const x = []
+   const y = []
 
-   timestamp = data.Timestamp
-
-   let update = {
-      x: [],
-      y: []
-   }
-
-   let indicies = []
-   const time = new Date(timestamp)
-
-   for (let i = 0; i < data.Values.length; i++) {
-      update.x.push([time])
-      update.y.push([data.Values[i]])
+   for (let i = 0; i < data[0].length-1; i++) {
       indicies.push(i)
+      x.push([])
+      y.push([])
    }
 
-   Plotly.extendTraces(graph, update, indicies)
+   for (const update of data) {
+      const time = new Date(update[0])
+
+      for (let i = 1; i < update.length; i++) {
+         x[i-1].push(time)
+         y[i-1].push(update[i])
+      }
+   }
+
+   Plotly.extendTraces(graph, {x: x, y: y}, indicies)
 }
 
 function scroll() {
@@ -242,14 +241,12 @@ function receive(e) {
       return
    }
 
-   if (data.Op == 'data') {
-      update(data)
-   } else if (data.Op == 'enabled') {
+   if (data.Op == 'enabled') {
       enabled(data)
    } else if (data.Op == 'label')
       label(data)
    else
-      console.log('unknown op '+data)
+      update(data)
 }
 
 function play() {

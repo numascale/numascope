@@ -32,6 +32,7 @@ import (
 
 const (
    fifoPath = "/run/numascope-label"
+   coalescing = 400
 )
 
 var (
@@ -42,7 +43,7 @@ var (
    events     = flag.String("events", "pgfault,pgalloc_normal,pgfree,numa_local,n2VicBlkXSent,n2RdBlkXSent,n2RdBlkModSent,n2ChangeToDirtySent,n2BcastProbeCmdSent,n2RdRespSent,n2ProbeRespSent", "comma-separated list of events")
    list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
-   interval   = 200
+   interval   = 64
    present    = []Sensor{
       NewNumaconnect2(),
       NewKernel(),
@@ -225,6 +226,9 @@ func main() {
    initweb(*listenAddr)
    labelBuf := make([]byte, 32)
 
+   var lastTimestamp uint64 = 0
+   var epochs [][]int64
+
    for {
       time.Sleep(time.Duration(interval) * time.Millisecond)
 
@@ -243,12 +247,19 @@ func main() {
          continue
       }
 
-      var samples []int64
+      samples := []int64{int64(timestamp)}
 
       for _, sensor := range present {
          samples = append(samples, sensor.Sample()...)
       }
 
-      broadcastData(timestamp, samples)
+      // coalesce
+      if timestamp - lastTimestamp < coalescing || len(epochs) == 0 {
+         epochs = append(epochs, samples)
+      } else {
+         broadcastData(epochs)
+         lastTimestamp = timestamp
+         epochs = nil
+      }
    }
 }

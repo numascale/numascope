@@ -42,12 +42,6 @@ type ChangeMessage struct {
    Enabled   map[string][]string
 }
 
-type DataMessage struct {
-   Op        string
-   Timestamp uint64
-   Values    []int64
-}
-
 type LabelMessage struct {
    Op        string
    Timestamp uint64
@@ -119,19 +113,13 @@ func broadcastLabel(timestamp uint64, label string) {
    }
 }
 
-func broadcastData(timestamp uint64, samples []int64) {
-   msg := DataMessage{
-      Op: "data",
-      Timestamp: timestamp,
-      Values: samples,
-   }
-
+func broadcastData(epochs [][]int64) {
    for _, c := range connections {
       if c.stopped {
          continue
       }
 
-      err := c.WriteJSON(&msg)
+      err := c.WriteJSON(&epochs)
 
       if err != nil && *debug {
          fmt.Println("failed writing:", err)
