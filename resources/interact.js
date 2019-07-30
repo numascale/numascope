@@ -29,6 +29,7 @@ let stopped = false
 let discrete = false
 let timestamp = Date.now()
 let interval = 100 // milliseconds
+let offline = false
 
 function connect() {
    socket = new WebSocket('ws://'+location.host+'/monitor')
@@ -79,6 +80,7 @@ function enabled(msg) {
 
    let data = []
    let total = 0
+   const type = !offline && total > 20 ? 'scattergl' : 'scatter'
 
    for (const sensor in msg.Enabled)
       total += msg.Enabled[sensor].length * (discrete ? sources[sensor] : 1)
@@ -89,7 +91,7 @@ function enabled(msg) {
             for (let i = 0; i < sources[sensor]; i++) {
                data.push({
                   name: heading+':'+i,
-                  type: total > 20  ? 'scattergl' : 'scatter',
+                  type: type,
                   mode: 'lines',
                   hoverlabel: {namelength: 50},
                   x: [], y: []
@@ -98,7 +100,7 @@ function enabled(msg) {
          } else {
             data.push({
                name: heading,
-               type: total > 20  ? 'scattergl' : 'scatter',
+               type: type,
                mode: 'lines',
                hoverlabel: {namelength: 50},
                x: [], y: []
@@ -312,10 +314,12 @@ function parse(file) {
    // special button to activate all events
    subtree.appendChild(button('all', false))
 
+   const type = !offline && total > 20 ? 'scattergl' : 'scatter'
+
    for (let col = 1; col < json[0].length; col++) {
       data.push({
          name: json[0][col],
-         type: total > 20  ? 'scattergl' : 'scatter',
+         type: type,
          mode: 'lines',
          hoverlabel: {namelength: 50},
          x: [], y: []
@@ -361,11 +365,12 @@ function load(file) {
 }
 
 if (location.host == '' || location.protocol == 'https:') {
-  document.getElementById('btn-play').parentElement.className += ' disabled'
-  document.getElementById('btn-pause').parentElement.className += ' disabled'
-  document.getElementById('btn-stop').parentElement.className += ' disabled'
-  document.getElementById('averaging').disabled = true
-  document.getElementById('data-interval').disabled = true
-  document.getElementById('loading').innerHTML = 'Standalone mode'
+   document.getElementById('btn-play').parentElement.className += ' disabled'
+   document.getElementById('btn-pause').parentElement.className += ' disabled'
+   document.getElementById('btn-stop').parentElement.className += ' disabled'
+   document.getElementById('averaging').disabled = true
+   document.getElementById('data-interval').disabled = true
+   document.getElementById('loading').innerHTML = 'Standalone mode'
+   offline = true
 } else
    connect()
