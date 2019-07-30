@@ -360,7 +360,7 @@ function load(file) {
    reader.readAsText(file)
 }
 
-if (location.host == '') {
+if (location.host == '' || location.protocol == 'https:') {
   document.getElementById('btn-play').parentElement.className += ' disabled'
   document.getElementById('btn-pause').parentElement.className += ' disabled'
   document.getElementById('btn-stop').parentElement.className += ' disabled'
