@@ -20,6 +20,7 @@ const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
 const annotations = []
 const buttons = []
+let socketAverage = false
 let socket
 let signedon
 let sources
@@ -71,7 +72,7 @@ function enabled(msg) {
    elem.parentElement.nextSibling.data = ' '+msg.Interval+'ms'
    elem.value = Math.log2(msg.Interval)
 
-   var elem = document.getElementById('averaging')
+   var elem = document.getElementById('serverAverage')
    discrete = msg.Discrete
    elem.checked = !discrete
 
@@ -282,10 +283,14 @@ function slider() {
    socket.send(msg)
 }
 
-function averaging() {
+function serverAverageChange() {
    const val = arguments[0].checked
    const msg = JSON.stringify({Op: 'averaging', Value: String(val)})
    socket.send(msg)
+}
+
+function socketAverageChange() {
+   socketAverage = arguments[0].checked
 }
 
 function parse(file) {
@@ -368,7 +373,7 @@ if (location.host == '' || location.protocol == 'https:') {
    document.getElementById('btn-play').parentElement.className += ' disabled'
    document.getElementById('btn-pause').parentElement.className += ' disabled'
    document.getElementById('btn-stop').parentElement.className += ' disabled'
-   document.getElementById('averaging').disabled = true
+   document.getElementById('serverAverage').disabled = true
    document.getElementById('data-interval').disabled = true
    document.getElementById('loading').innerHTML = 'Standalone mode'
    offline = true
