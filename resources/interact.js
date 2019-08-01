@@ -338,9 +338,9 @@ function parse(file) {
    for (let row = 1; row < json.length; row++) {
       const time = new Date(json[row][0]/1000)
 
-      for (let col = 1; col < json[0].length-1; col++) {
-         data[col].x.push(time)
-         data[col].y.push(json[row][col])
+      for (let col = 1; col < json[0].length; col++) {
+         data[col-1].x.push(time)
+         data[col-1].y.push(json[row][col])
       }
    }
 
