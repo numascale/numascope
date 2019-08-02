@@ -22,7 +22,7 @@ Loading model...
 
 <div class="container" style="margin: 15px 0px 15px 0px">
    <div class="row text-center">
-   <div class="col-sm-1 btn-group btn-group-toggle" data-toggle="buttons">
+   <div class="col-sm-2 btn-group btn-group-toggle" data-toggle="buttons">
       <label class="btn btn-primary active" onclick="play()">
          <input type="radio" name="options" id="btn-play" autocomplete="off" checked> &#9654;
       </label>
@@ -33,8 +33,8 @@ Loading model...
          <input type="radio" name="options" id="btn-stop" autocomplete="off"> &#9724;
       </label>
    </div>
-   <div class="col-sm-4">
-      <label>Resolution <input type="range" class="custom-range" min="0" max="16" value="6" id="data-interval" oninput="slider(this)" style="width: 150px;vertical-align: middle"></label> 64ms</div>
+   <div class="col-sm-3">
+      <label>Resolution <input type="range" class="custom-range" min="0" max="16" value="6" id="data-interval" oninput="slider(this)" style="width: 100px;vertical-align: middle"></label> 64ms</div>
    <div class="col-sm-3 custom-control custom-switch">
       <input type="checkbox" checked class="custom-control-input" id="serverAverage" onclick="serverAverageChange(this)">
       <label class="custom-control-label" for="serverAverage">average over servers</label>
