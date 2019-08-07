@@ -171,7 +171,7 @@ func state(desc string, state bool) {
       sensor.Unlock()
    }
 
-   panic("event not found")
+   panic("event '"+desc+"' not found")
 }
 
 func toggle(desc string, val string) {

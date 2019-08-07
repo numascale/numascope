@@ -18,6 +18,7 @@
 const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
+const btnStop = document.getElementById('btn-stop')
 const annotations = []
 const buttons = []
 let socketAverage = true
@@ -232,7 +233,7 @@ function filterUNC(elems) {
 
 // takes an array, reduces it with filter[] and returns the result
 function reduce(ents) {
-   if (typeof filter === 'undefine')
+   if (typeof filter === 'undefined')
       return ents
 
    const out = []
@@ -353,15 +354,15 @@ function parse(file) {
    const data = []
    const total = json[0].length
 
-   const grouping = document.getElementById('grouping')
+/*   const grouping = document.getElementById('grouping')
    while (grouping.firstChild)
-      grouping.removeChild(grouping.firstChild)
+      grouping.removeChild(grouping.firstChild) */
 
    let headings = json[0].slice(1, total)
 
    if (json[0][0] == 'UNC') {
       headings = filterUNC(headings)
-      grouping.appendChild(button('PE unit'))
+//      grouping.appendChild(button('PE unit'))
    }
 
    const container = document.querySelector('#events')
@@ -425,6 +426,15 @@ function parse(file) {
 }
 
 function load(file) {
+   btnPlay.checked = false
+   btnPlay.parentElement.className = 'btn btn-primary'
+   btnPause.checked = false
+   btnPause.parentElement.className = 'btn btn-primary'
+   btnStop.checked = true
+   btnStop.parentElement.className = 'btn btn-primary active'
+
+   stop()
+
    const reader = new FileReader()
    reader.onload = parse
    reader.readAsText(file)
