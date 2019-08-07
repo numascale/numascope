@@ -20,7 +20,7 @@ const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
 const annotations = []
 const buttons = []
-let socketAverage = false
+let socketAverage = true
 let socket
 let signedon
 let sources
@@ -31,6 +31,8 @@ let discrete = false
 let timestamp = Date.now()
 let interval = 100 // milliseconds
 let offline = false
+let filter
+const headings = []
 
 function connect() {
    socket = new WebSocket('ws://'+location.host+'/monitor')
@@ -206,6 +208,47 @@ function button(name, on) {
    return btn
 }
 
+function filterUNC(elems) {
+   if (!document.getElementById('socketAverage').checked)
+      return elems
+
+   // map input series to output series
+   filter = []
+   const headings = []
+
+   for (let i = 0; i < elems.length; i++) {
+      const name = elems[i].replace(/\.\d+/, '')
+      const j = headings.indexOf(name)
+
+      if (j == -1) {
+         filter.push(headings.length)
+         headings.push(name)
+      } else
+         filter.push(j)
+   }
+
+   return headings
+}
+
+// takes an array, reduces it with filter[] and returns the result
+function reduce(ents) {
+   if (typeof filter === 'undefine')
+      return ents
+
+   const out = []
+
+   for (let col = 0; col < ents.length; col++) {
+      dest = filter[col]
+
+      if (typeof out[dest] === 'undefined')
+         out[dest] = ents[col]
+      else
+         out[dest] += ents[col]
+   }
+
+   return out
+}
+
 function signon(data) {
    $('#connecting').hide()
    $('#loading').hide()
@@ -218,12 +261,16 @@ function signon(data) {
       container.removeChild(container.firstChild)
 
    for (const key in data.Tree) {
+      let elems = data.Tree[key]
+
+      if (key == 'UNC')
+         elems = filterUNC(elems)
+
       subtree = document.createElement('details')
       let node = document.createElement('summary')
       subtree.appendChild(node)
       let text = document.createTextNode(key+' metrics')
       node.appendChild(text)
-      elems = data.Tree[key]
 
       // special button to activate all events
       subtree.appendChild(button('all', false))
@@ -283,14 +330,14 @@ function slider() {
    socket.send(msg)
 }
 
-function serverAverageChange() {
-   const val = arguments[0].checked
+function serverAverageChange(control) {
+   const val = control.checked
    const msg = JSON.stringify({Op: 'averaging', Value: String(val)})
    socket.send(msg)
 }
 
-function socketAverageChange() {
-   socketAverage = arguments[0].checked
+function socketAverageChange(control) {
+   socketAverage = control.checked
 }
 
 function parse(file) {
@@ -300,10 +347,23 @@ function parse(file) {
       json = JSON.parse(file.target.result)
    } catch (e) {
       alert('Only valid JSON input supported')
+      return
    }
 
    const data = []
    const total = json[0].length
+
+   const grouping = document.getElementById('grouping')
+   while (grouping.firstChild)
+      grouping.removeChild(grouping.firstChild)
+
+   let headings = json[0].slice(1, total)
+
+   if (json[0][0] == 'UNC') {
+      headings = filterUNC(headings)
+      grouping.appendChild(button('PE unit'))
+   }
+
    const container = document.querySelector('#events')
 
    // remove any pre-existing sources from last session
@@ -321,26 +381,27 @@ function parse(file) {
 
    const type = !offline && total > 20 ? 'scattergl' : 'scatter'
 
-   for (let col = 1; col < json[0].length; col++) {
+   for (const heading of headings) {
       data.push({
-         name: json[0][col],
+         name: heading,
          type: type,
          mode: 'lines',
          hoverlabel: {namelength: 50},
          x: [], y: []
       })
 
-      subtree.appendChild(button(json[0][col], true))
+      subtree.appendChild(button(heading, true))
    }
 
    container.appendChild(subtree)
 
    for (let row = 1; row < json.length; row++) {
       const time = new Date(json[row][0]/1000)
+      const elems = reduce(json[row].slice(1, json[row].length))
 
-      for (let col = 1; col < json[0].length; col++) {
-         data[col-1].x.push(time)
-         data[col-1].y.push(json[row][col])
+      for (let elem = 0; elem < elems.length; elem++) {
+         data[elem].x.push(time)
+         data[elem].y.push(elems[elem])
       }
    }
 
