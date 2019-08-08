@@ -320,7 +320,8 @@ function pause() {
 
 function stop() {
    scrolling = false
-   socket.send(JSON.stringify({Op: 'stop'}))
+   if (typeof socket !== 'undefined')
+      socket.send(JSON.stringify({Op: 'stop'}))
    stopped = true
 }
 
