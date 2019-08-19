@@ -88,7 +88,7 @@ func Activate() {
 }
 
 func usage() {
-   fmt.Println("Usage: numascope [option...] stat|live")
+   fmt.Println("Usage: numascope [option...] stat|live|record")
    flag.PrintDefaults()
 }
 
@@ -151,9 +151,11 @@ func main() {
       stat()
    case "live":
       live()
+   case "record":
+      record()
+   default:
+      // unexpected mode
+      flag.Usage()
+      os.Exit(1)
    }
-
-   // unexpected mode
-   flag.Usage()
-   os.Exit(1)
 }

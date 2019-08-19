@@ -19,7 +19,6 @@ package main
 
 import (
    "bytes"
-   "flag"
    "fmt"
    "os"
    "strings"
@@ -84,10 +83,5 @@ func stat() {
          }
       }
       fmt.Println()
-
-      if flag.NArg() == 0 {
-         break
-      }
    }
 }
-
