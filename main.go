@@ -18,14 +18,10 @@
 package main
 
 import (
-   "bytes"
    "flag"
    "fmt"
    "os"
-   "path"
-   "strconv"
    "strings"
-   "time"
 
    "golang.org/x/sys/unix"
 )
@@ -50,69 +46,6 @@ var (
    }
    fifo       int
 )
-
-func vmxstat() {
-   if *debug {
-      fmt.Printf("detected %v\n", present)
-   }
-
-   if *list {
-      for _, sensor := range present {
-         fmt.Printf("%s events:\n", sensor.Name())
-
-         for _, val := range sensor.Events() {
-            fmt.Printf("%30s   %s\n", val.mnemonic, val.desc)
-         }
-      }
-
-      os.Exit(0)
-   }
-
-   delay := time.Duration(interval) * time.Millisecond
-   line := 0
-   headings := make([][]string, len(present))
-
-   for i, sensor := range present {
-      headings[i] = sensor.Headings()
-   }
-
-   labelBuf := make([]byte, 32)
-
-   for {
-      time.Sleep(delay)
-
-      // print any label
-      n, err := unix.Read(fifo, labelBuf)
-      validate(err)
-
-      if n > 0 {
-         fmt.Printf("- %s -\n", bytes.TrimSpace(labelBuf[:n]))
-      }
-
-      // print column headings
-      if line == 0 {
-         for i := range present {
-            fmt.Print(strings.Join(headings[i], " "))
-         }
-         fmt.Println()
-      }
-
-      line = (line + 1) % 25
-
-      for i, sensor := range present {
-         samples := sensor.Sample()
-
-         for j, heading := range headings[i] {
-            fmt.Printf("%*d ", len(heading), samples[j])
-         }
-      }
-      fmt.Println()
-
-      if flag.NArg() == 0 {
-         break
-      }
-   }
-}
 
 func dups() {
    dups := 0
@@ -154,9 +87,15 @@ func Activate() {
    }
 }
 
+func usage() {
+   fmt.Println("Usage: numascope [option...] stat|live")
+   flag.PrintDefaults()
+}
+
 func main() {
    pin()
 
+   flag.Usage = usage
    flag.Parse()
 
    if os.Geteuid() != 0 {
@@ -194,22 +133,6 @@ func main() {
       os.Exit(0)
    }
 
-   exe := path.Base(os.Args[0])
-
-   switch {
-   case flag.NArg() == 1:
-      var err error
-      interval, err = strconv.Atoi(flag.Arg(0))
-      if err != nil {
-         flag.Usage()
-         os.Exit(1)
-      }
-      interval *= 1000 // convert to milliseconds
-   case flag.NArg() > 1:
-      flag.Usage()
-      os.Exit(1)
-   }
-
    // expected to fail if already exists
    unix.Umask(0)
    unix.Mkfifo(fifoPath, 0666)
@@ -218,48 +141,19 @@ func main() {
    fifo, err = unix.Open(fifoPath, unix.O_RDONLY|unix.O_NONBLOCK, 0)
    validate(err)
 
-   if exe == "vmxstat" {
-      vmxstat()
-      os.Exit(0)
+   if flag.NArg() != 1 {
+      flag.Usage()
+      os.Exit(1)
    }
 
-   initweb(*listenAddr)
-   labelBuf := make([]byte, 32)
-
-   var lastTimestamp uint64 = 0
-   var epochs [][]int64
-
-   for {
-      time.Sleep(time.Duration(interval) * time.Millisecond)
-
-      // forward any label
-      n, err := unix.Read(fifo, labelBuf)
-      validate(err)
-
-      timestamp := uint64(time.Now().UnixNano() / 1e6)
-
-      if n > 0 {
-         broadcastLabel(timestamp, string(bytes.TrimSpace(labelBuf[:n])))
-      }
-
-      // avoid wasting processor time
-      if len(connections) == 0 {
-         continue
-      }
-
-      samples := []int64{int64(timestamp)}
-
-      for _, sensor := range present {
-         samples = append(samples, sensor.Sample()...)
-      }
-
-      // coalesce
-      if timestamp - lastTimestamp < coalescing || len(epochs) == 0 {
-         epochs = append(epochs, samples)
-      } else {
-         broadcastData(epochs)
-         lastTimestamp = timestamp
-         epochs = nil
-      }
+   switch flag.Arg(0) {
+   case "stat":
+      stat()
+   case "live":
+      live()
    }
+
+   // unexpected mode
+   flag.Usage()
+   os.Exit(1)
 }

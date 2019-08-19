@@ -18,6 +18,7 @@
 package main
 
 import (
+   "bytes"
    "fmt"
    "net/http"
    "strconv"
@@ -58,6 +59,48 @@ var (
    upgrader = websocket.Upgrader{}
    connections []*Connection
 )
+
+func live() {
+   initweb(*listenAddr)
+   labelBuf := make([]byte, 32)
+
+   var lastTimestamp uint64 = 0
+   var epochs [][]int64
+
+   for {
+      time.Sleep(time.Duration(interval) * time.Millisecond)
+
+      // forward any label
+      n, err := unix.Read(fifo, labelBuf)
+      validate(err)
+
+      timestamp := uint64(time.Now().UnixNano() / 1e6)
+
+      if n > 0 {
+         broadcastLabel(timestamp, string(bytes.TrimSpace(labelBuf[:n])))
+      }
+
+      // avoid wasting processor time
+      if len(connections) == 0 {
+         continue
+      }
+
+      samples := []int64{int64(timestamp)}
+
+      for _, sensor := range present {
+         samples = append(samples, sensor.Sample()...)
+      }
+
+      // coalesce
+      if timestamp - lastTimestamp < coalescing || len(epochs) == 0 {
+         epochs = append(epochs, samples)
+      } else {
+         broadcastData(epochs)
+         lastTimestamp = timestamp
+         epochs = nil
+      }
+   }
+}
 
 func (c *Connection) WriteJSON(msg interface{}) error {
    if *debug {
