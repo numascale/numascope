@@ -61,7 +61,7 @@ outer:
       case <-time.After(time.Duration(interval) * time.Millisecond):
       }
 
-      timestamp := int64(time.Now().UnixNano() / 1e6)
+      timestamp := time.Now().UnixNano() / 1e3
       line := []int64{timestamp}
 
       for _, sensor := range present {

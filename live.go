@@ -37,7 +37,7 @@ type SignonMessage struct {
 
 type ChangeMessage struct {
    Op        string
-   Timestamp uint64
+   Timestamp int64
    Interval int
    Discrete  bool
    Enabled   map[string][]string
@@ -45,7 +45,7 @@ type ChangeMessage struct {
 
 type LabelMessage struct {
    Op        string
-   Timestamp uint64
+   Timestamp int64
    Label     string
 }
 
@@ -64,7 +64,7 @@ func live() {
    initweb(*listenAddr)
    labelBuf := make([]byte, 32)
 
-   var lastTimestamp uint64 = 0
+   var lastTimestamp int64 = 0
    var epochs [][]int64
 
    for {
@@ -74,7 +74,7 @@ func live() {
       n, err := unix.Read(fifo, labelBuf)
       validate(err)
 
-      timestamp := uint64(time.Now().UnixNano() / 1e6)
+      timestamp := time.Now().UnixNano() / 1e3
 
       if n > 0 {
          broadcastLabel(timestamp, string(bytes.TrimSpace(labelBuf[:n])))
@@ -85,7 +85,7 @@ func live() {
          continue
       }
 
-      samples := []int64{int64(timestamp)}
+      samples := []int64{timestamp}
 
       for _, sensor := range present {
          samples = append(samples, sensor.Sample()...)
@@ -117,7 +117,7 @@ func (c *Connection) WriteJSON(msg interface{}) error {
 func change(c Connection) {
    msg := ChangeMessage{
       Op: "enabled",
-      Timestamp: uint64(time.Now().UnixNano() / 1e6),
+      Timestamp: time.Now().UnixNano() / 1e3,
       Interval: interval,
       Discrete: *discrete,
       Enabled: make(map[string][]string),
@@ -141,7 +141,7 @@ func change(c Connection) {
    }
 }
 
-func broadcastLabel(timestamp uint64, label string) {
+func broadcastLabel(timestamp int64, label string) {
    msg := LabelMessage{
       Op: "label",
       Timestamp: timestamp,

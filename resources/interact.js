@@ -141,7 +141,7 @@ function enabled(msg) {
 
 function label(data) {
    annotations.push({
-      x: new Date(data.Timestamp),
+      x: new Date(data.Timestamp / 1e3),
       y: 0,
       text: data.Label,
       arrowhead: 3,
@@ -164,7 +164,7 @@ function update(data) {
    }
 
    for (const update of data) {
-      const time = new Date(update[0])
+      const time = new Date(update[0] / 1e3)
 
       for (let i = 1; i < update.length; i++) {
          x[i-1].push(time)
@@ -177,7 +177,7 @@ function update(data) {
 
 function scroll() {
    if (scrolling && listened)
-      Plotly.relayout(graph, 'xaxis.range', [new Date(timestamp-60000), new Date(timestamp)])
+      Plotly.relayout(graph, 'xaxis.range', [new Date(timestamp - 60e3), new Date(timestamp)])
 
    timestamp += interval
 }
@@ -292,9 +292,9 @@ function receive(e) {
       return
    }
 
-   if (data.Op == 'enabled') {
+   if (data.Op == 'enabled')
       enabled(data)
-   } else if (data.Op == 'label')
+   else if (data.Op == 'label')
       label(data)
    else
       update(data)
@@ -398,7 +398,7 @@ function parse(file) {
    container.appendChild(subtree)
 
    for (let row = 1; row < json.length; row++) {
-      const time = new Date(json[row][0]/1000)
+      const time = new Date(json[row][0] / 1e3)
       const elems = reduce(json[row].slice(1, json[row].length))
 
       for (let elem = 0; elem < elems.length; elem++) {
