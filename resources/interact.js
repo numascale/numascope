@@ -84,7 +84,6 @@ function enabled(msg) {
 
    let data = []
    let total = 0
-   const type = !offline && total > 20 ? 'scattergl' : 'scatter'
 
    for (const sensor in msg.Enabled)
       total += msg.Enabled[sensor].length * (discrete ? sources[sensor] : 1)
@@ -95,7 +94,7 @@ function enabled(msg) {
             for (let i = 0; i < sources[sensor]; i++) {
                data.push({
                   name: heading+':'+i,
-                  type: type,
+                  type: 'scatter',
                   mode: 'lines',
                   hoverlabel: {namelength: 50},
                   x: [], y: []
@@ -104,7 +103,7 @@ function enabled(msg) {
          } else {
             data.push({
                name: heading,
-               type: type,
+               type: 'scatter',
                mode: 'lines',
                hoverlabel: {namelength: 50},
                x: [], y: []
@@ -381,12 +380,10 @@ function parse(file) {
    // special button to activate all events
    subtree.appendChild(button('all', false))
 
-   const type = !offline && total > 20 ? 'scattergl' : 'scatter'
-
    for (const heading of headings) {
       data.push({
          name: heading,
-         type: type,
+         type: 'scatter',
          mode: 'lines',
          hoverlabel: {namelength: 50},
          x: [], y: []
