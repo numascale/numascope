@@ -42,10 +42,17 @@ func record() {
    sigs := make(chan os.Signal, 1)
    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-   headings := []string{present[0].Name()}
-   for _, sensor := range present {
-      headings = append(headings, sensor.Headings()...)
+   // enable recording all events
+   events := present[0].Events()
+   for i := range events {
+      events[i].enabled = true
    }
+
+   present[0].Enable(*discrete)
+
+   // write header
+   headings := []string{present[0].Name()}
+   headings = append(headings, present[0].Headings()...)
 
    b, err := json.Marshal(headings)
    validate(err)
@@ -63,10 +70,7 @@ outer:
 
       timestamp := time.Now().UnixNano() / 1e3
       line := []int64{timestamp}
-
-      for _, sensor := range present {
-         line = append(line, sensor.Sample()...)
-      }
+      line = append(line, present[0].Sample()...)
 
       b, err := json.Marshal(line)
       validate(err)

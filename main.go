@@ -40,6 +40,8 @@ var (
    list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
    interval   = 64
+
+   // highest priority first
    present    = []Sensor{
       NewNumaconnect2(),
       NewKernel(),
