@@ -126,7 +126,7 @@ func NewNumaconnect2() *Numaconnect2 {
          {0x378/8, "n2CycOneFreeHreqPiu", "cycles with at least one free Hreq context in PIU", false},
          {0x380/8, "n2CycOneFreePprb", "cycles with at least one free Pprb context in PIU", false},
          {0x388/8, "n2CycOneFreeHprb", "cycles with at least one free Hprb context in PIU", false},
-         {0x390/8, "n2cycOneFreePtre", "cycles with at least one free Preq context in PIU", false},
+         {0x390/8, "n2CycOneFreePreq", "cycles with at least one free Preq context in PIU", false},
 
          {0x398/8, "n2CacheTag0Accesses", "accesses to Ctag cache 0", false},
          {0x3A0/8, "n2CacheTag0WriteHit", "write hit accesses to Ctag cache 0", false},
