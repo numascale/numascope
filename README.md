@@ -15,23 +15,26 @@ To access on-chip resources via memory-mapped registers, the numascope binary ne
 Clone the project:
 ```
 $ git clone https://github.com/numascale/numascope
+```
 
 Build the project:
 ```
 $ go build
 ```
+
 Deploy binary and resources system-wide on target system, running as root:
 ```
 $ sudo mv numascope /usr/local/bin
 $ sudo mv resources /usr/local/share/numascope
 $ sudo chown root:root /usr/local/bin/numascope
 $ sudo chmod u+s /usr/local/bin/numascope
+```
 
 Alternatively, the binary can be run from anywhere on the filesystem as root, or with sudo; it will look in the current directory for the 'resources' directory.
 
-## Running the tests
+## Using the tool
 
-To get command help:
+### To get command help:
 ```
 $ numascope
 Usage: numascope [option...] stat|live|record
@@ -47,7 +50,7 @@ Usage: numascope [option...] stat|live|record
         web service listen address and port (default "0.0.0.0:80")
 ```
 
-To view performance counters live from the console:
+### To view performance counters live from the console:
 ```
 $ numascope stat
 numa_local pgalloc_normal pgfree pgfault
@@ -61,24 +64,23 @@ numa_local pgalloc_normal pgfree pgfault
         31           2158   2080     170
 ```
 
-To view performance counters live from a browser:
+### To view performance counters live from a browser:
 ```
 $ numascope live
 web interface available on port 80
 ```
-You can now point your browser to http://<hostip>, or use SSH port forwarding
+You can now point your browser to http://`<hostip>`, or use SSH port forwarding
 
-To capture events for later viewing:
+### To capture events for later viewing:
 ```
 $ numascope record
 spooling to output.json
 ```
 This allows loading the trace into the HTML5 UI later.
 
-
 ## Authors
 
-* Daniel J Blueman, Principal Software Engineer @ Numascale [dblueman](https://github.com/dblueman)
+* Daniel J Blueman, Principal Software Engineer @ Numascale
 
 ## License
 
