@@ -2,6 +2,8 @@
 
 Numascope allows live viewing, capture and replay of Numascale's on-chip performance counters, along with useful kernel virtual memory counters.
 
+![Screenshot](screenshot.png)
+
 ## Getting Started
 
 ### Prerequisites
@@ -34,7 +36,7 @@ Alternatively, the binary can be run from anywhere on the filesystem as root, or
 
 ## Using the tool
 
-### To get command help:
+### To get command help
 ```
 $ numascope
 Usage: numascope [option...] stat|live|record
@@ -50,7 +52,7 @@ Usage: numascope [option...] stat|live|record
         web service listen address and port (default "0.0.0.0:80")
 ```
 
-### To view performance counters live from the console:
+### To view performance counters live from the console
 ```
 $ numascope stat
 numa_local pgalloc_normal pgfree pgfault
@@ -64,14 +66,14 @@ numa_local pgalloc_normal pgfree pgfault
         31           2158   2080     170
 ```
 
-### To view performance counters live from a browser:
+### To view performance counters live from a browser
 ```
 $ numascope live
 web interface available on port 80
 ```
 You can now point your browser to http://`<hostip>`, or use SSH port forwarding
 
-### To capture events for later viewing:
+### To capture events for later viewing
 ```
 $ numascope record
 spooling to output.json
