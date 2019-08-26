@@ -49,7 +49,7 @@ func stat() {
    headings := make([][]string, len(present))
 
    for i, sensor := range present {
-      headings[i] = sensor.Headings()
+      headings[i] = sensor.Headings(true)
    }
 
    labelBuf := make([]byte, 32)

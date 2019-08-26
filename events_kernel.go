@@ -194,12 +194,19 @@ func (d *Kernel) Enable(discrete bool) {
    validate(err)
 }
 
-func (d *Kernel) Headings() []string {
+func (d *Kernel) Headings(mnemonics bool) []string {
    headings := []string{}
 
    for _, event := range d.events {
+      var name string
+      if mnemonics {
+         name = event.mnemonic
+      } else {
+         name = event.desc
+      }
+
       if event.enabled {
-         headings = append(headings, event.mnemonic)
+         headings = append(headings, name)
       }
    }
 

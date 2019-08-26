@@ -265,7 +265,7 @@ func (d *Numaconnect2) Enable(discrete bool) {
    }
 }
 
-func (d *Numaconnect2) Headings() []string {
+func (d *Numaconnect2) Headings(mnemonics bool) []string {
    var headings []string
 
    for _, event := range d.events {
@@ -273,13 +273,20 @@ func (d *Numaconnect2) Headings() []string {
          continue
       }
 
+      var name string
+      if mnemonics {
+         name = event.mnemonic
+      } else {
+         name = event.desc
+      }
+
       if d.discrete {
          for i := 0; i < len(d.cards); i++ {
-            heading := fmt.Sprintf("%s:%d", event.mnemonic, i)
+            heading := fmt.Sprintf("%s:%d", name, i)
             headings = append(headings, heading)
          }
       } else {
-         headings = append(headings, event.mnemonic)
+         headings = append(headings, name)
       }
    }
 

@@ -43,7 +43,7 @@ type Sensor interface {
    // returns slice of events
    Events() []Event
    // returns headings of enabled events, accounting for discrete or not
-   Headings() []string
+   Headings(mnemonic bool) []string
    // returns samples
    Sample() []int64
 }

@@ -43,13 +43,8 @@ func record() {
    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
    // enable recording all events
-   events := present[0].Events()
    headings := []string{present[0].Name()}
-
-   for i := range events {
-      events[i].enabled = true
-      headings = append(headings, events[i].desc)
-   }
+   headings = append(headings, present[0].Headings(false)...)
 
    present[0].Enable(*discrete)
 
