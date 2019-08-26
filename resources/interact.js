@@ -397,16 +397,6 @@ function parse(file) {
 
    container.appendChild(subtree)
 
-   for (let row = 1; row < json.length; row++) {
-      const time = new Date(json[row][0] / 1e3)
-      const elems = reduce(json[row].slice(1, json[row].length))
-
-      for (let elem = 0; elem < elems.length; elem++) {
-         data[elem].x.push(time)
-         data[elem].y.push(elems[elem])
-      }
-   }
-
    const layout = {
       autosize: true,
       height: 700,
@@ -420,6 +410,39 @@ function parse(file) {
          yanchor: 'top',
          y: -0.5,
          orientation: total > 20 ? 'v' : 'h'
+      },
+      annotations: []
+   }
+
+   for (let row = 1; row < json.length; row++) {
+      const val = json[row][0]
+
+      // handle general commands
+      if (isNaN(val)) {
+         switch(val) {
+         case 'label':
+            layout.annotations.push({
+               x: new Date(json[row][1] / 1e3),
+               y: 0,
+               text: json[row][2],
+               arrowhead: 3,
+               ax: 0,
+               ay: 40
+            })
+            break;
+         default:
+            alert('unknown op '+op)
+         }
+
+         continue
+      }
+
+      const time = new Date(val / 1e3)
+      const elems = reduce(json[row].slice(1, json[row].length))
+
+      for (let elem = 0; elem < elems.length; elem++) {
+         data[elem].x.push(time)
+         data[elem].y.push(elems[elem])
       }
    }
 

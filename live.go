@@ -62,7 +62,7 @@ var (
 
 func live() {
    initweb(*listenAddr)
-   labelBuf := make([]byte, 32)
+   labelBuf := make([]byte, 256)
 
    var lastTimestamp int64 = 0
    var epochs [][]int64

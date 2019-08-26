@@ -18,25 +18,42 @@
 package main
 
 import (
+   "bytes"
    "fmt"
    "encoding/json"
    "os"
    "os/signal"
    "syscall"
    "time"
+
+   "golang.org/x/sys/unix"
 )
 
 const (
    fileName = "output.json"
 )
 
+var (
+   file *os.File
+)
+
+func writeLabel(timestamp int64, label string) {
+   elems := []interface{}{"label", timestamp, label}
+   b, err := json.Marshal(elems)
+   validate(err)
+   b = append(b, []byte(",\n")...)
+   _, err = file.Write(b)
+   validate(err)
+}
+
 func record() {
-   f, err := os.Create(fileName)
+   var err error
+   file, err = os.Create(fileName)
    validate(err)
 
    fmt.Printf("spooling to %v\n", fileName)
 
-   _, err = f.WriteString("[\n")
+   _, err = file.WriteString("[\n")
    validate(err)
 
    sigs := make(chan os.Signal, 1)
@@ -51,9 +68,10 @@ func record() {
    b, err := json.Marshal(headings)
    validate(err)
    b = append(b, []byte(",\n")...)
-   _, err = f.Write(b)
+   _, err = file.Write(b)
    validate(err)
 
+   labelBuf := make([]byte, 256)
 outer:
    for {
       select {
@@ -62,21 +80,30 @@ outer:
       case <-time.After(time.Duration(interval) * time.Millisecond):
       }
 
+      // record any label
+      n, err := unix.Read(fifo, labelBuf)
+      validate(err)
+
       timestamp := time.Now().UnixNano() / 1e3
+
+      if n > 0 {
+         writeLabel(timestamp, string(bytes.TrimSpace(labelBuf[:n])))
+      }
+
       line := []int64{timestamp}
       line = append(line, present[0].Sample()...)
 
       b, err := json.Marshal(line)
       validate(err)
       b = append(b, []byte(",\n")...)
-      _, err = f.Write(b)
+      _, err = file.Write(b)
       validate(err)
    }
 
    // trim trailing ','
-   _, err = f.Seek(-2, os.SEEK_CUR)
+   _, err = file.Seek(-2, os.SEEK_CUR)
    validate(err)
 
-   _, err = f.WriteString("\n]\n")
+   _, err = file.WriteString("\n]\n")
    validate(err)
 }
