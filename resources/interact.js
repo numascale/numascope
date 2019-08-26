@@ -163,7 +163,7 @@ function update(data) {
    }
 
    // ensure graph scrolling is synchronised
-   timestamp = data[0][0] / 1e3
+   timestamp = data[data.length-1][0] / 1e3
 
    for (const update of data) {
       const time = new Date(update[0] / 1e3)
