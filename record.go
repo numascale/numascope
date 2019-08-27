@@ -51,6 +51,9 @@ func record() {
    file, err = os.Create(fileName)
    validate(err)
 
+   // always capture per-chip counters
+   *discrete = true
+
    fmt.Printf("spooling to %v\n", fileName)
 
    _, err = file.WriteString("[\n")
