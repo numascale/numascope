@@ -73,12 +73,25 @@ web interface available on port 80
 ```
 You can now point your browser to http://`<hostip>`, or use SSH port forwarding
 
+Single-clicking lines in the legend (de)select them, whereas double-clicking (un)isolates them.
+
 ### To capture events for later viewing
 ```
 $ numascope record
 spooling to output.json
 ```
 This allows loading the trace into the HTML5 UI later.
+
+### Annontating the trace
+In either live of recording mode, annotations can be added to trace for example to mark when a workload is started, or phases within a workload. This can be done by a user, a script or within the application.
+```
+$ echo 'phase 1' >/run/numascope-label
+```
+
+### Using in offline mode
+If live viewing isn't needed, the static web resources can be used in offline mode, eg at [https://resources.numascale.com/numascope/resources/index.html].
+
+This allows loading and interaction with recorded traces.
 
 ## Authors
 
