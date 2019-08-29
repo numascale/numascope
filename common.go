@@ -22,6 +22,7 @@ import (
    "fmt"
    "path"
    "runtime"
+   "syscall"
 )
 
 type Event struct {
@@ -52,6 +53,17 @@ type Sensor interface {
 // Checks if an error occurred
 func validate(err error) {
    if err != nil {
+      _, file, line, _ := runtime.Caller(1)
+      _, leaf := path.Split(file)
+      fmt.Printf("Failed with '%v' at %v:%v\n", err, leaf, line)
+      os.Exit(1)
+   }
+}
+
+func validateNonblock(err error) {
+   errno, ok := err.(syscall.Errno)
+
+   if ok && errno != syscall.EAGAIN {
       _, file, line, _ := runtime.Caller(1)
       _, leaf := path.Split(file)
       fmt.Printf("Failed with '%v' at %v:%v\n", err, leaf, line)

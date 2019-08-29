@@ -59,7 +59,7 @@ func stat() {
 
       // print any label
       n, err := unix.Read(fifo, labelBuf)
-      validate(err)
+      validateNonblock(err)
 
       if n > 0 {
          fmt.Printf("- %s -\n", bytes.TrimSpace(labelBuf[:n]))

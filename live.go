@@ -72,7 +72,7 @@ func live() {
 
       // forward any label
       n, err := unix.Read(fifo, labelBuf)
-      validate(err)
+      validateNonblock(err)
 
       timestamp := time.Now().UnixNano() / 1e3
 
