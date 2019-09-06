@@ -62,11 +62,11 @@ func record() {
    sigs := make(chan os.Signal, 1)
    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
+   present[0].Enable(*discrete)
+
    // enable recording all events
    headings := []string{present[0].Name()}
    headings = append(headings, present[0].Headings(false)...)
-
-   present[0].Enable(*discrete)
 
    b, err := json.Marshal(headings)
    validate(err)
