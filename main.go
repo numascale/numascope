@@ -27,7 +27,7 @@ import (
 )
 
 const (
-   fifoPath = "/run/numascope-label"
+   fifoPath = "/run/numascope-ctl"
    coalescing = 600e3
 )
 

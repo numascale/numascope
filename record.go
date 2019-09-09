@@ -23,6 +23,8 @@ import (
    "encoding/json"
    "os"
    "os/signal"
+   "strconv"
+   "strings"
    "syscall"
    "time"
 
@@ -30,7 +32,7 @@ import (
 )
 
 const (
-   fileName = "output.json"
+   defaultFilename = "output.json"
 )
 
 var (
@@ -46,35 +48,80 @@ func writeLabel(timestamp int64, label string) {
    validate(err)
 }
 
-func record() {
+func fileStop() {
+   if file == nil {
+      return
+   }
+
+   // trim trailing ','
+   _, err := file.Seek(-2, os.SEEK_CUR)
+   validate(err)
+
+   _, err = file.WriteString("\n]\n")
+   validate(err)
+
+   err = file.Close()
+   validate(err)
+}
+
+func fileStart(fileName string) {
+   fileStop()
+
    var err error
    file, err = os.Create(fileName)
    validate(err)
 
-   // always capture per-chip counters
-   *discrete = true
-
-   fmt.Printf("spooling to %v\n", fileName)
-
    _, err = file.WriteString("[\n")
    validate(err)
 
-   sigs := make(chan os.Signal, 1)
-   signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-   present[0].Enable(*discrete)
-
-   // enable recording all events
    headings := []string{present[0].Name()}
    headings = append(headings, present[0].Headings(false)...)
 
    b, err := json.Marshal(headings)
    validate(err)
+
    b = append(b, []byte(",\n")...)
    _, err = file.Write(b)
    validate(err)
 
-   labelBuf := make([]byte, 256)
+   fmt.Printf("recording to %v\n", fileName)
+}
+
+func setInterval(input string) {
+   l := len(input)
+   if l < 2 {
+      fmt.Printf("missing interval")
+      return
+   }
+
+   suffix := input[l-2:]
+   if suffix != "ms" {
+      fmt.Printf("unknown suffix '%s'\n", suffix)
+      return
+   }
+
+   nStr := input[:l-2]
+
+   var err error
+   i, err := strconv.Atoi(nStr)
+   if err != nil {
+      fmt.Printf("unknown number '%s'\n", nStr)
+      return
+   }
+
+   interval = i
+}
+
+func record() {
+   // always capture per-chip counters
+   *discrete = true
+   present[0].Enable(*discrete)
+
+   sigs := make(chan os.Signal, 1)
+   signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+   fileStart(defaultFilename)
+   fifoBuf := make([]byte, 256)
 outer:
    for {
       select {
@@ -83,14 +130,42 @@ outer:
       case <-time.After(time.Duration(interval) * time.Millisecond):
       }
 
-      // record any label
-      n, err := unix.Read(fifo, labelBuf)
+      // handle command
+      n, err := unix.Read(fifo, fifoBuf)
       validateNonblock(err)
 
       timestamp := time.Now().UnixNano() / 1e3
 
       if n > 0 {
-         writeLabel(timestamp, string(bytes.TrimSpace(labelBuf[:n])))
+         line := string(bytes.TrimSpace(fifoBuf[:n]))
+         fields := strings.SplitN(line, " ", 2)
+
+         switch fields[0] {
+         case "record":
+            if len(fields) == 2 {
+               fileStart(fields[1])
+            } else {
+               fmt.Println("syntax: record <filename.json>")
+            }
+         case "label":
+            if len(fields) >= 2 {
+               writeLabel(timestamp, fields[1])
+            } else {
+               fmt.Println("syntax: label <label>..")
+            }
+         case "pause":
+            fmt.Printf("pause\n")
+         case "resume":
+            fmt.Printf("resume\n")
+         case "interval":
+            if len(fields) == 2 {
+               setInterval(fields[1])
+            } else {
+               fmt.Println("syntax: interval <n>ms")
+            }
+         default:
+            fmt.Printf("unknown command '%v'\n", line)
+         }
       }
 
       line := []int64{timestamp}
@@ -103,10 +178,5 @@ outer:
       validate(err)
    }
 
-   // trim trailing ','
-   _, err = file.Seek(-2, os.SEEK_CUR)
-   validate(err)
-
-   _, err = file.WriteString("\n]\n")
-   validate(err)
+   fileStop()
 }
