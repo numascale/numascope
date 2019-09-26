@@ -85,7 +85,7 @@ This allows loading the trace into the HTML5 UI later.
 ### Annontating the trace
 In either live of recording mode, annotations can be added to trace for example to mark when a workload is started, or phases within a workload. This can be done by a user, a script or within the application.
 ```
-$ echo 'phase 1' >/run/numascope-label
+$ echo "label phase 1" >/run/numascope-ctl
 ```
 
 ### Using in offline mode
