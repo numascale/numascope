@@ -32,7 +32,7 @@ import (
 )
 
 const (
-   defaultFilename = "output.json"
+   defaultFilename = "output"
 )
 
 var (
@@ -68,7 +68,20 @@ func fileStart(fileName string) {
    fileStop()
 
    var err error
-   file, err = os.Create(fileName)
+   fileNameFull := fileName+".json"
+   index := 0
+
+again:
+   if index > 0 {
+      fileNameFull = fmt.Sprintf("%s_%d.json", fileName, index)
+   }
+
+   file, err = os.OpenFile(fileNameFull, os.O_CREATE | os.O_EXCL | os.O_WRONLY, 0444)
+   if perr, ok := err.(*os.PathError); ok && perr.Err == unix.EEXIST {
+      index++
+      goto again
+   }
+
    validate(err)
 
    _, err = file.WriteString("[\n")
@@ -84,7 +97,7 @@ func fileStart(fileName string) {
    _, err = file.Write(b)
    validate(err)
 
-   fmt.Printf("recording to %v\n", fileName)
+   fmt.Printf("recording to %v\n", fileNameFull)
 }
 
 func setInterval(input string) {
