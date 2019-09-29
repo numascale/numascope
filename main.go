@@ -91,7 +91,7 @@ func Activate() {
 }
 
 func usage() {
-   fmt.Println("Usage: numascope [option...] stat|live|record")
+   fmt.Println("Usage: numascope [option...] stat|live|record [command] [argument...]")
    flag.PrintDefaults()
 }
 
@@ -144,7 +144,7 @@ func main() {
    fifo, err = unix.Open(fifoPath, unix.O_RDONLY|unix.O_NONBLOCK, 0)
    validate(err)
 
-   if flag.NArg() != 1 {
+   if flag.NArg() < 1 {
       flag.Usage()
       os.Exit(1)
    }
@@ -155,7 +155,7 @@ func main() {
    case "live":
       live()
    case "record":
-      record()
+      record(flag.Args()[1:])
    default:
       // unexpected mode
       flag.Usage()

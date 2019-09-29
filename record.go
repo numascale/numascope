@@ -19,6 +19,7 @@ package main
 
 import (
    "bytes"
+   "os/exec"
    "fmt"
    "encoding/json"
    "os"
@@ -124,7 +125,7 @@ func setInterval(input string) {
    interval = i
 }
 
-func record() {
+func record(args []string) {
    // always capture per-chip counters
    *discrete = true
    present[0].Enable(*discrete)
@@ -142,10 +143,29 @@ func record() {
 
    fileStart()
    fifoBuf := make([]byte, 256)
+
+   // launch any command
+   exitStatus := make(chan error)
+
+   if len(args) > 0 {
+      cmd := exec.Command(args[0], args[1:]...)
+      cmd.Stdin = os.Stdin
+      cmd.Stdout = os.Stdout
+      cmd.Stderr = os.Stderr
+      err := cmd.Start()
+      validate(err)
+
+      go func() {
+         exitStatus <- cmd.Wait()
+      }()
+   }
+
 outer:
    for {
       select {
       case <-sigs:
+         break outer
+      case <-exitStatus:
          break outer
       case <-time.After(time.Duration(interval) * time.Millisecond):
       }
