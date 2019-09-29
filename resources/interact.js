@@ -19,6 +19,8 @@ const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
 const btnStop = document.getElementById('btn-stop')
+const radServerAverage = document.getElementById('serverAverage')
+const radSocketAverage = document.getElementById('socketAverage')
 const annotations = []
 const buttons = []
 let socketAverage = true
@@ -75,9 +77,8 @@ function enabled(msg) {
    elem.parentElement.nextSibling.data = ' '+msg.Interval+'ms'
    elem.value = Math.log2(msg.Interval)
 
-   var elem = document.getElementById('serverAverage')
    discrete = msg.Discrete
-   elem.checked = !discrete
+   radServerAverage.checked = !discrete
 
    for (let btn of buttons)
       btn.className = subset(msg.Enabled, btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
@@ -212,7 +213,7 @@ function button(name, on) {
 }
 
 function filterUNC(elems) {
-   if (!document.getElementById('socketAverage').checked)
+   if (!radSocketAverage.checked)
       return elems
 
    // map input series to output series
@@ -221,6 +222,43 @@ function filterUNC(elems) {
 
    for (let i = 0; i < elems.length; i++) {
       const name = elems[i].replace(/\.\d+/, '')
+
+      // coalesce with any matching heading
+      const j = headings.indexOf(name)
+
+      if (j == -1) {
+         filter.push(headings.length)
+         headings.push(name)
+      } else
+         filter.push(j)
+   }
+
+   return headings
+}
+
+function filterNC2(elems) {
+   let expr
+
+   if (radServerAverage.checked && !radSocketAverage.checked)
+      expr = /:\d+/
+   else if (radServerAverage.checked && radServerAverage.checked)
+      expr = /( \d+)?:\d+/
+   else if (!radServerAverage.checked && !radServerAverage.checked)
+      expr = / \d+/
+   else // neither set
+      return elems
+
+   if (!radServerAverage.checked)
+      return elems
+
+   // map input series to output series
+   filter = []
+   const headings = []
+
+   for (let i = 0; i < elems.length; i++) {
+      const name = elems[i].replace(expr, '')
+
+      // coalesce with any matching heading
       const j = headings.indexOf(name)
 
       if (j == -1) {
@@ -337,7 +375,9 @@ function slider() {
 function serverAverageChange(control) {
    const val = control.checked
    const msg = JSON.stringify({Op: 'averaging', Value: String(val)})
-   socket.send(msg)
+
+   if (typeof socket !== 'undefined')
+      socket.send(msg)
 }
 
 function socketAverageChange(control) {
@@ -363,9 +403,14 @@ function parse(file) {
 
    let headings = json[0].slice(1, total)
 
-   if (json[0][0] == 'UNC') {
+   switch(json[0][0]) {
+   case "UNC":
       headings = filterUNC(headings)
 //      grouping.appendChild(button('PE unit'))
+      break
+   case "Numascale NumaConnect2":
+      headings = filterNC2(headings)
+      break
    }
 
    const container = document.querySelector('#events')
@@ -468,7 +513,7 @@ if (location.host == '' || location.protocol == 'https:') {
    document.getElementById('btn-play').parentElement.className += ' disabled'
    document.getElementById('btn-pause').parentElement.className += ' disabled'
    document.getElementById('btn-stop').parentElement.className += ' disabled'
-   document.getElementById('serverAverage').disabled = true
+//   radServerAverage.disabled = true
    document.getElementById('data-interval').disabled = true
    document.getElementById('loading').innerHTML = 'Standalone mode'
    offline = true
