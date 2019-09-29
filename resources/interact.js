@@ -15,6 +15,8 @@
     along with Numascope.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+'use strict';
+
 const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
@@ -192,7 +194,7 @@ function select(info) {
       State: info.target.className.includes('btn-primary') ? 'off' : 'on'
    }
 
-   val = JSON.stringify(msg)
+   const val = JSON.stringify(msg)
    socket.send(val)
 }
 
@@ -279,7 +281,7 @@ function reduce(ents) {
    const out = []
 
    for (let col = 0; col < ents.length; col++) {
-      dest = filter[col]
+      const dest = filter[col]
 
       if (typeof out[dest] === 'undefined')
          out[dest] = ents[col]
@@ -307,10 +309,10 @@ function signon(data) {
       if (key == 'UNC')
          elems = filterUNC(elems)
 
-      subtree = document.createElement('details')
-      let node = document.createElement('summary')
+      const subtree = document.createElement('details')
+      const node = document.createElement('summary')
       subtree.appendChild(node)
-      let text = document.createTextNode(key+' metrics')
+      const text = document.createTextNode(key+' metrics')
       node.appendChild(text)
 
       // special button to activate all events
@@ -419,7 +421,7 @@ function parse(file) {
    while (container.firstChild)
       container.removeChild(container.firstChild)
 
-   subtree = document.createElement('details')
+   const subtree = document.createElement('details')
    const node = document.createElement('summary')
    subtree.appendChild(node)
    const text = document.createTextNode(json[0][0]+' metrics')
