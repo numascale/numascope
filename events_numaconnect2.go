@@ -305,6 +305,8 @@ func (d *Numaconnect2) Sample() []int64 {
       samples = make([]int64, d.nEnabled)
    }
 
+   nCards := len(d.cards)
+
    for n := range d.cards {
       d.cards[n].regs[statCtrl] = 1 // disable counting
 
@@ -340,7 +342,7 @@ func (d *Numaconnect2) Sample() []int64 {
          d.cards[n].last[i] = val
 
          if d.discrete {
-            samples[n*d.nEnabled+i] = int64(sample)
+            samples[i*nCards+n] = int64(sample)
          } else {
             // sum totals for average
             samples[i] += int64(sample)
