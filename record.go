@@ -129,6 +129,14 @@ func record() {
    *discrete = true
    present[0].Enable(*discrete)
 
+   // enable all events
+   events := present[0].Events()
+   for i := range events {
+      events[i].enabled = true
+   }
+
+   Activate()
+
    sigs := make(chan os.Signal, 1)
    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
