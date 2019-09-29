@@ -507,6 +507,7 @@ function load(file) {
    const reader = new FileReader()
    reader.onload = parse
    reader.readAsText(file)
+   document.title = file.name+' - numascope'
 }
 
 if (location.host == '' || location.protocol == 'https:') {
