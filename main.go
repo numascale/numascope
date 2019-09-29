@@ -39,6 +39,7 @@ var (
    events     = flag.String("events", "pgfault,pgalloc_normal,pgfree,numa_local,n2VicBlkXSent,n2RdBlkXSent,n2RdBlkModSent,n2ChangeToDirtySent,n2BcastProbeCmdSent,n2RdRespSent,n2ProbeRespSent", "comma-separated list of events")
    list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
+   recordFile = flag.String("filename", "output.json", "filename to record to")
    interval   = 128
 
    // highest priority first

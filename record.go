@@ -23,16 +23,13 @@ import (
    "encoding/json"
    "os"
    "os/signal"
+   "path"
    "strconv"
    "strings"
    "syscall"
    "time"
 
    "golang.org/x/sys/unix"
-)
-
-const (
-   defaultFilename = "output"
 )
 
 var (
@@ -64,16 +61,18 @@ func fileStop() {
    validate(err)
 }
 
-func fileStart(fileName string) {
+func fileStart() {
    fileStop()
 
    var err error
-   fileNameFull := fileName+".json"
+   fileNameFull := *recordFile
    index := 0
 
 again:
    if index > 0 {
-      fileNameFull = fmt.Sprintf("%s_%d.json", fileName, index)
+      ext := path.Ext(*recordFile)
+      leaf := strings.TrimSuffix(*recordFile, ext)
+      fileNameFull = fmt.Sprintf("%s_%d%s", leaf, index, ext)
    }
 
    file, err = os.OpenFile(fileNameFull, os.O_CREATE | os.O_EXCL | os.O_WRONLY, 0444)
@@ -133,7 +132,7 @@ func record() {
    sigs := make(chan os.Signal, 1)
    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-   fileStart(defaultFilename)
+   fileStart()
    fifoBuf := make([]byte, 256)
 outer:
    for {
@@ -156,7 +155,8 @@ outer:
          switch fields[0] {
          case "record":
             if len(fields) == 2 {
-               fileStart(fields[1])
+               *recordFile = fields[1]
+               fileStart()
             } else {
                fmt.Println("syntax: record <filename.json>")
             }
