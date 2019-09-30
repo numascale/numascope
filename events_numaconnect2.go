@@ -121,7 +121,7 @@ func NewNumaconnect2() *Numaconnect2 {
          {0x2E0/8, "n2CacheStoreHitRmpe", "nCache store hits on RMPE", false},
          {0x2E8/8, "n2CacheStoreMissRmpe", "nCache store misses on RMPE", false},
          {0x2F0/8, "n2CacheRolloutRmpe", "nCache roll outs on RMPE", false},
-         {0x2F8/8, "n2CacaheInvalidatesRmpe", "nCache invalidates on RMPE", false},
+         {0x2F8/8, "n2CacheInvalidatesRmpe", "nCache invalidates on RMPE", false},
 
          {0x378/8, "n2CycOneFreeHreqPiu", "cycles with at least one free Hreq context in PIU", false},
          {0x380/8, "n2CycOneFreePprb", "cycles with at least one free Pprb context in PIU", false},
