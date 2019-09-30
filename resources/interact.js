@@ -131,7 +131,7 @@ function enabled(msg) {
       }
    }
 
-   Plotly.react(graph, data, layout, {displaylogo: false})
+   Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 
    // used to check if rangeslider should be updated or not
    if (!listened) {
