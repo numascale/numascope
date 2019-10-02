@@ -493,7 +493,7 @@ function parse(file) {
       }
    }
 
-   Plotly.react(graph, data, layout, {displaylogo: false})
+   Plotly.react(graph, data, layout, {displaylogo: false, responsive: true}})
 }
 
 function load(file) {
