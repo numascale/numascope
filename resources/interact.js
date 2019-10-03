@@ -297,11 +297,9 @@ function signon(data) {
    $('#loading').hide()
 
    sources = data.Sources
-   const container = document.querySelector('#events')
+   reset()
 
-   // remove any pre-existing sources from last session
-   while (container.firstChild)
-      container.removeChild(container.firstChild)
+   const container = document.querySelector('#events')
 
    for (const key in data.Tree) {
       let elems = data.Tree[key]
@@ -386,6 +384,13 @@ function socketAverageChange(control) {
    socketAverage = control.checked
 }
 
+// remove any pre-existing sources from last session
+function reset() {
+   for (const container of [document.querySelector('#events'), document.getElementById('totals')])
+      while (container.firstChild)
+         container.removeChild(container.firstChild)
+}
+
 function parse(file) {
    let json
 
@@ -415,11 +420,7 @@ function parse(file) {
       break
    }
 
-   const container = document.querySelector('#events')
-
-   // remove any pre-existing sources from last session
-   while (container.firstChild)
-      container.removeChild(container.firstChild)
+   reset()
 
    const subtree = document.createElement('details')
    const node = document.createElement('summary')
@@ -429,6 +430,8 @@ function parse(file) {
 
    // special button to activate all events
    subtree.appendChild(button('all', false))
+
+   const totals = []
 
    for (const heading of headings) {
       data.push({
@@ -440,8 +443,10 @@ function parse(file) {
       })
 
       subtree.appendChild(button(heading, true))
+      totals.push(0)
    }
 
+   const container = document.querySelector('#events')
    container.appendChild(subtree)
 
    const layout = {
@@ -490,10 +495,27 @@ function parse(file) {
       for (let elem = 0; elem < elems.length; elem++) {
          data[elem].x.push(time)
          data[elem].y.push(elems[elem])
+         totals[elem] += elems[elem]
       }
    }
 
-   Plotly.react(graph, data, layout, {displaylogo: false, responsive: true}})
+   const totalsTable = document.getElementById('totals')
+   const interval = (json[json.length-1][0] - json[1][0]) / 1e6
+   document.getElementById('tableCaption').innerHTML = 'Total time '+interval.toFixed(2)+'s'
+   let i = 0
+
+   for (const heading of headings) {
+      const row = totalsTable.insertRow(-1)
+      const cell = row.insertCell(-1)
+
+      cell.innerHTML = heading
+      row.insertCell(-1).innerHTML = totals[i]
+      row.insertCell(-1).innerHTML = Math.round(totals[i]/interval)
+
+      i++
+   }
+
+   Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 }
 
 function load(file) {
