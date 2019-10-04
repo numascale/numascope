@@ -36,12 +36,12 @@ Loading model...
    <div class="col-sm-3">
       <label>Resolution <input type="range" class="custom-range" min="0" max="16" value="6" id="data-interval" oninput="slider(this)" style="width: 100px;vertical-align: middle"></label> 64ms</div>
    <div class="col-sm-3 custom-control custom-switch">
-      <input type="checkbox" checked class="custom-control-input" id="serverAverage" onclick="serverAverageChange(this)">
-      <label class="custom-control-label" for="serverAverage">average over servers</label>
+      <input type="checkbox" checked class="custom-control-input" id="serverGroup" onclick="serverGroupChange(this)">
+      <label class="custom-control-label" for="serverGroup">group servers</label>
    </div>
    <div class="col-sm-3 custom-control custom-switch">
-      <input type="checkbox" checked class="custom-control-input" id="socketAverage" onclick="socketAverageChange(this)">
-      <label class="custom-control-label" for="socketAverage">average over sockets</label>
+      <input type="checkbox" checked class="custom-control-input" id="socketGroup" onclick="socketGroupChange(this)">
+      <label class="custom-control-label" for="socketGroup">group sockets</label>
    </div>
    <div class="col-sm-1">
     <label class="btn btn-primary btn-sm" onchange="load(childNodes[1].files[0])">

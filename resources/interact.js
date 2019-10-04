@@ -21,11 +21,11 @@ const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
 const btnStop = document.getElementById('btn-stop')
-const radServerAverage = document.getElementById('serverAverage')
-const radSocketAverage = document.getElementById('socketAverage')
+const radServerGroup = document.getElementById('serverGroup')
+const radSocketGroup = document.getElementById('socketGroup')
 const annotations = []
 const buttons = []
-let socketAverage = true
+let socketGroup = true
 let socket
 let signedon
 let sources
@@ -80,7 +80,7 @@ function enabled(msg) {
    elem.value = Math.log2(msg.Interval)
 
    discrete = msg.Discrete
-   radServerAverage.checked = !discrete
+   radServerGroup.checked = !discrete
 
    for (let btn of buttons)
       btn.className = subset(msg.Enabled, btn.firstChild.nodeValue) ? 'btn btn-primary btn-sm m-1' : 'btn btn-light btn-sm m-1'
@@ -215,7 +215,7 @@ function button(name, on) {
 }
 
 function filterUNC(elems) {
-   if (!radSocketAverage.checked)
+   if (!radSocketGroup.checked)
       return elems
 
    // map input series to output series
@@ -241,16 +241,16 @@ function filterUNC(elems) {
 function filterNC2(elems) {
    let expr
 
-   if (radServerAverage.checked && !radSocketAverage.checked)
+   if (radServerGroup.checked && !radSocketGroup.checked)
       expr = /:\d+/
-   else if (radServerAverage.checked && radServerAverage.checked)
+   else if (radServerGroup.checked && radServerGroup.checked)
       expr = /( \d+)?:\d+/
-   else if (!radServerAverage.checked && !radServerAverage.checked)
+   else if (!radServerGroup.checked && !radServerGroup.checked)
       expr = / \d+/
    else // neither set
       return elems
 
-   if (!radServerAverage.checked)
+   if (!radServerGroup.checked)
       return elems
 
    // map input series to output series
@@ -372,7 +372,7 @@ function slider() {
    socket.send(msg)
 }
 
-function serverAverageChange(control) {
+function serverGroupChange(control) {
    const val = control.checked
    const msg = JSON.stringify({Op: 'averaging', Value: String(val)})
 
@@ -380,8 +380,8 @@ function serverAverageChange(control) {
       socket.send(msg)
 }
 
-function socketAverageChange(control) {
-   socketAverage = control.checked
+function socketGroupChange(control) {
+   socketGroup = control.checked
 }
 
 // remove any pre-existing sources from last session
@@ -538,7 +538,7 @@ if (location.host == '' || location.protocol == 'https:') {
    document.getElementById('btn-play').parentElement.className += ' disabled'
    document.getElementById('btn-pause').parentElement.className += ' disabled'
    document.getElementById('btn-stop').parentElement.className += ' disabled'
-//   radServerAverage.disabled = true
+//   radServerGroup.disabled = true
    document.getElementById('data-interval').disabled = true
    document.getElementById('loading').innerHTML = 'Standalone mode'
    offline = true

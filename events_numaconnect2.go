@@ -344,7 +344,7 @@ func (d *Numaconnect2) Sample() []int64 {
          if d.discrete {
             samples[i*nCards+n] = int64(sample)
          } else {
-            // sum totals for average
+            // sum all cards
             samples[i] += int64(sample)
          }
 
@@ -352,13 +352,6 @@ func (d *Numaconnect2) Sample() []int64 {
       }
 
       d.cards[n].regs[statCtrl] = 1 | (1 << 2) // reenable counting
-   }
-
-   if !d.discrete {
-      // divide through for average
-      for i := range samples {
-         samples[i] /= int64(len(d.cards))
-      }
    }
 
    return samples
