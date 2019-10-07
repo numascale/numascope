@@ -119,10 +119,13 @@ function enabled(msg) {
       autosize: true,
       height: 700,
       xaxis: {
-         rangeslider: {}
+         title: 'time (s)',
+         rangeslider: {},
+         hoverformat: ',.3s'
       },
       yaxis: {
-         title: 'events'
+         title: 'events',
+         hoverformat: ',.3s'
       },
       legend: {
          yanchor: 'top',
@@ -453,10 +456,13 @@ function parse(file) {
       autosize: true,
       height: 700,
       xaxis: {
-         rangeslider: {}
+         title: 'time (s)',
+         rangeslider: {},
+         hoverformat: ',.3s'
       },
       yaxis: {
-         title: 'events'
+         title: 'events',
+         hoverformat: ',.3s'
       },
       legend: {
          yanchor: 'top',
