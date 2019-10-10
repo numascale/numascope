@@ -44,7 +44,7 @@ func stat() {
       os.Exit(0)
    }
 
-   delay := time.Duration(interval) * time.Millisecond
+   delay := time.Duration(*interval) * time.Millisecond
    line := 0
    headings := make([][]string, len(present))
 

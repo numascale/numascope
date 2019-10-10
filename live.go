@@ -68,7 +68,7 @@ func live() {
    var epochs [][]int64
 
    for {
-      time.Sleep(time.Duration(interval) * time.Millisecond)
+      time.Sleep(time.Duration(*interval) * time.Millisecond)
 
       // forward any label
       n, err := unix.Read(fifo, labelBuf)
@@ -118,7 +118,7 @@ func change(c Connection) {
    msg := ChangeMessage{
       Op: "enabled",
       Timestamp: time.Now().UnixNano() / 1e3,
-      Interval: interval,
+      Interval: *interval,
       Discrete: *discrete,
       Enabled: make(map[string][]string),
    }
@@ -327,7 +327,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
             change(*c2)
          }
       case "interval":
-         interval, err = strconv.Atoi(msg["Value"])
+         *interval, err = strconv.Atoi(msg["Value"])
          if err != nil {
             fmt.Printf("undefined value %v\n", msg["Value"])
          }

@@ -122,7 +122,7 @@ func setInterval(input string) {
       return
    }
 
-   interval = i
+   *interval = i
 }
 
 func record(args []string) {
@@ -167,7 +167,7 @@ outer:
          break outer
       case <-exitStatus:
          break outer
-      case <-time.After(time.Duration(interval) * time.Millisecond):
+      case <-time.After(time.Duration(*interval) * time.Millisecond):
       }
 
       // handle command
