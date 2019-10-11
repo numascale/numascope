@@ -40,7 +40,8 @@ var (
    list       = flag.Bool("list", false, "list events available on this host")
    discrete   = flag.Bool("discrete", false, "report events per unit, rather than average")
    recordFile = flag.String("filename", "output.json", "filename to record to")
-   interval   = flag.Int("interval", 128, "sample interval in ms")
+   interval   = flag.Int("interval", 256, "sample interval in ms")
+   overwrite  = flag.Bool("overwrite", false, "overwrite existing file")
 
    // highest priority first
    present    = []Sensor{

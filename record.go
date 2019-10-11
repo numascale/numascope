@@ -76,7 +76,12 @@ again:
       fileNameFull = fmt.Sprintf("%s_%d%s", leaf, index, ext)
    }
 
-   file, err = os.OpenFile(fileNameFull, os.O_CREATE | os.O_EXCL | os.O_WRONLY, 0444)
+   flags := os.O_CREATE | os.O_WRONLY
+   if !*overwrite {
+      flags |= os.O_EXCL
+   }
+
+   file, err = os.OpenFile(fileNameFull, flags, 0444)
    if perr, ok := err.(*os.PathError); ok && perr.Err == unix.EEXIST {
       index++
       goto again
