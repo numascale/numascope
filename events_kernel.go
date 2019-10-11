@@ -228,6 +228,7 @@ func (d *Kernel) Sample() []int64 {
    delta := uint64(current.Sub(d.lastElapsed) / time.Nanosecond)
    d.lastElapsed = current
 
+   // get EOF with SeekAt
    d.file.Seek(0, 0)
    n, err := d.file.Read(buf)
    validate(err)

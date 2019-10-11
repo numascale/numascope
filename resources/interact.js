@@ -244,7 +244,7 @@ function filterUNC(elems) {
 function filterNC2(elems) {
    let expr
 
-   if (radServerGroup.checked && !radSocketGroup.checked)
+   if (radServerGroup.checked && !radServerGroup.checked)
       expr = /:\d+/
    else if (radServerGroup.checked && radServerGroup.checked)
       expr = /( \d+)?:\d+/
@@ -400,7 +400,7 @@ function parse(file) {
    try {
       json = JSON.parse(file.target.result)
    } catch (e) {
-      alert('Only valid JSON input supported')
+      alert('Only valid JSON input supported\n\n'+e)
       return
    }
 
