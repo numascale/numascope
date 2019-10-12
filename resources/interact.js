@@ -22,10 +22,10 @@ const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
 const btnStop = document.getElementById('btn-stop')
 const radServerGroup = document.getElementById('serverGroup')
-const radSocketGroup = document.getElementById('socketGroup')
+const radUnitGroup = document.getElementById('unitGroup')
 const annotations = []
 const buttons = []
-let socketGroup = true
+let unitGroup = true
 let socket
 let signedon
 let sources
@@ -218,7 +218,7 @@ function button(name, on) {
 }
 
 function filterUNC(elems) {
-   if (!radSocketGroup.checked)
+   if (!radUnitGroup.checked)
       return elems
 
    // map input series to output series
@@ -383,8 +383,8 @@ function serverGroupChange(control) {
       socket.send(msg)
 }
 
-function socketGroupChange(control) {
-   socketGroup = control.checked
+function unitGroupChange(control) {
+   unitGroup = control.checked
 }
 
 // remove any pre-existing sources from last session
