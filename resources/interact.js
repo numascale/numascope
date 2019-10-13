@@ -25,6 +25,7 @@ const radServerGroup = document.getElementById('serverGroup')
 const radUnitGroup = document.getElementById('unitGroup')
 const annotations = []
 const buttons = []
+let normalise // used to derive percentage
 let unitGroup = true
 let socket
 let signedon
@@ -38,6 +39,34 @@ let interval = 100 // milliseconds
 let offline = false
 let filter
 const headings = []
+const layout = {
+   height: 1000,
+   xaxis: {
+      title: 'seconds',
+      rangeslider: {},
+      hoverformat: ',.3s'
+   },
+   yaxis: {
+      title: 'events',
+      hoverformat: ',.3s',
+      titlefont: {color: '#1f77b4'},
+      tickfont: {color: '#1f77b4'}
+   },
+   yaxis2: {
+      title: '%',
+      hoverformat: ',.3r',
+      titlefont: {color: '#ff7f0e'},
+      tickfont: {color: '#ff7f0e'},
+      overlaying: 'y',
+      side: 'right',
+      showgrid: false
+   },
+   legend: {
+      borderwidth: 34,
+      bordercolor: "#ffffff"
+   },
+   annotations: []
+}
 
 function connect() {
    socket = new WebSocket('ws://'+location.host+'/monitor')
@@ -100,7 +129,8 @@ function enabled(msg) {
                   type: 'scatter',
                   mode: 'lines',
                   hoverlabel: {namelength: 50},
-                  x: [], y: []
+                  x: [], y: [],
+                  yaxis: heading[0] == '%' ? 'y2' : 'y1'
                })
             }
          } else {
@@ -109,31 +139,14 @@ function enabled(msg) {
                type: 'scatter',
                mode: 'lines',
                hoverlabel: {namelength: 50},
-               x: [], y: []
+               x: [], y: [],
+               yaxis: (heading[0] == '%') ? 'y2' : 'y1'
             })
          }
       }
    }
 
-   const layout = {
-      autosize: true,
-      height: 700,
-      xaxis: {
-         title: 'time (s)',
-         rangeslider: {},
-         hoverformat: ',.3s'
-      },
-      yaxis: {
-         title: 'events',
-         hoverformat: ',.3s'
-      },
-      legend: {
-         yanchor: 'top',
-         y: -0.5,
-         orientation: total > 20 ? 'v' : 'h'
-      }
-   }
-
+   layout.legend.orientation = total > 20 ? 'v' : 'h'
    Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 
    // used to check if rangeslider should be updated or not
@@ -144,11 +157,11 @@ function enabled(msg) {
    }
 }
 
-function label(data) {
+function label(elem) {
    annotations.push({
-      x: new Date(data.Timestamp / 1e3),
+      x: new Date(elem.Timestamp / 1e3),
       y: 0,
-      text: data.Label,
+      text: elem.Label,
       arrowhead: 3,
       ax: 0,
       ay: 40
@@ -157,21 +170,21 @@ function label(data) {
    Plotly.relayout(graph, {annotations: annotations})
 }
 
-function update(data) {
+function update(elem) {
    const indicies = []
    const x = []
    const y = []
 
-   for (let i = 0; i < data[0].length-1; i++) {
+   for (let i = 0; i < elem[0].length-1; i++) {
       indicies.push(i)
       x.push([])
       y.push([])
    }
 
    // ensure graph scrolling is synchronised
-   timestamp = data[data.length-1][0] / 1e3
+   timestamp = elem[elem.length-1][0] / 1e3
 
-   for (const update of data) {
+   for (const update of elem) {
       const time = new Date(update[0] / 1e3)
 
       for (let i = 1; i < update.length; i++) {
@@ -295,17 +308,17 @@ function reduce(ents) {
    return out
 }
 
-function signon(data) {
+function signon(elem) {
    $('#connecting').hide()
    $('#loading').hide()
 
-   sources = data.Sources
+   sources = elem.Sources
    reset()
 
    const container = document.querySelector('#events')
 
-   for (const key in data.Tree) {
-      let elems = data.Tree[key]
+   for (const key in elem.Tree) {
+      let elems = elem.Tree[key]
 
       if (key == 'UNC')
          elems = filterUNC(elems)
@@ -327,20 +340,20 @@ function signon(data) {
 }
 
 function receive(e) {
-   let data = JSON.parse(e.data)
+   let input = JSON.parse(e.data)
 
    if (signedon == false) {
-      signon(data)
+      signon(input)
       signedon = true
       return
    }
 
-   if (data.Op == 'enabled')
-      enabled(data)
-   else if (data.Op == 'label')
-      label(data)
+   if (input.Op == 'enabled')
+      enabled(input)
+   else if (input.Op == 'label')
+      label(input)
    else
-      update(data)
+      update(input)
 }
 
 function play() {
@@ -400,7 +413,7 @@ function parse(file) {
    try {
       json = JSON.parse(file.target.result)
    } catch (e) {
-      alert('Only valid JSON input supported\n\n'+e)
+      alert('Input file is not well-formed JSON\n\n'+e)
       return
    }
 
@@ -411,7 +424,7 @@ function parse(file) {
    while (grouping.firstChild)
       grouping.removeChild(grouping.firstChild) */
 
-   let headings = json[0].slice(1, total)
+   let headings = json[1]
 
    switch(json[0][0]) {
    case "UNC":
@@ -422,6 +435,10 @@ function parse(file) {
       headings = filterNC2(headings)
       break
    }
+
+   normalise = json[0][2] / 100
+   if (radServerGroup.checked) // handle per-server
+      normalise /= json[0][1]
 
    reset()
 
@@ -442,7 +459,8 @@ function parse(file) {
          type: 'scatter',
          mode: 'lines',
          hoverlabel: {namelength: 50},
-         x: [], y: []
+         x: [], y: [],
+         yaxis: (heading[0] == '%') ? 'y2' : 'y1'
       })
 
       subtree.appendChild(button(heading, true))
@@ -452,27 +470,8 @@ function parse(file) {
    const container = document.querySelector('#events')
    container.appendChild(subtree)
 
-   const layout = {
-      autosize: true,
-      height: 700,
-      xaxis: {
-         title: 'time (s)',
-         rangeslider: {},
-         hoverformat: ',.3s'
-      },
-      yaxis: {
-         title: 'events',
-         hoverformat: ',.3s'
-      },
-      legend: {
-         yanchor: 'top',
-         y: -0.5,
-         orientation: total > 20 ? 'v' : 'h'
-      },
-      annotations: []
-   }
-
-   for (let row = 1; row < json.length; row++) {
+   const timeOffset = json[2][0]
+   for (let row = 2; row < json.length; row++) {
       const val = json[row][0]
 
       // handle general commands
@@ -480,7 +479,7 @@ function parse(file) {
          switch(val) {
          case 'label':
             layout.annotations.push({
-               x: new Date(json[row][1] / 1e3),
+               x: (json[row][1] - timeOffset) / 1e6,
                y: 0,
                text: json[row][2],
                arrowhead: 3,
@@ -495,18 +494,19 @@ function parse(file) {
          continue
       }
 
-      const time = new Date(val / 1e3)
+      const seconds = (val - timeOffset) / 1e6
       const elems = reduce(json[row].slice(1, json[row].length))
 
       for (let elem = 0; elem < elems.length; elem++) {
-         data[elem].x.push(time)
-         data[elem].y.push(elems[elem])
+         data[dataOffset+elem].x.push(seconds)
+         data[dataOffset+elem].y.push(
+            (headings[elem][0] == '%') ? (elems[elem] / normalise) : elems[elem])
          totals[elem] += elems[elem]
       }
    }
 
    const totalsTable = document.getElementById('totals')
-   const interval = (json[json.length-1][0] - json[1][0]) / 1e6
+   const interval = (json[json.length-1][0] - json[2][0]) / 1e6
    document.getElementById('tableCaption').innerHTML = 'Total time '+interval.toFixed(2)+'s'
    let i = 0
 

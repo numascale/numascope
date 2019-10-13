@@ -89,12 +89,11 @@ again:
 
    validate(err)
 
-   _, err = file.WriteString("[\n")
+   header := fmt.Sprintf("[[\"%s\",%d,%d],\n", present[0].Name(), present[0].Sources(), present[0].Rate())
+   _, err = file.WriteString(header)
    validate(err)
 
-   headings := []string{present[0].Name()}
-   headings = append(headings, present[0].Headings(false)...)
-
+   headings := present[0].Headings(false)
    b, err := json.Marshal(headings)
    validate(err)
 
@@ -141,6 +140,10 @@ func sample() {
    validate(err)
 }
 
+func delay() {
+   time.Sleep(time.Duration(*interval) * time.Millisecond)
+}
+
 func record(args []string) {
    // always capture per-chip counters
    *discrete = true
@@ -163,6 +166,8 @@ func record(args []string) {
    // launch any command
    exitStatus := make(chan error)
 
+   // discard first sample to warmup cache
+   delay()
    sample()
 
    if len(args) > 0 {
@@ -231,7 +236,7 @@ outer:
 
    // capture quiescing
    for i := 0; i < 2; i++ {
-      time.Sleep(time.Duration(*interval) * time.Millisecond)
+      delay()
       sample()
    }
 
