@@ -167,14 +167,6 @@ func record(args []string) {
 
 outer:
    for {
-      select {
-      case <-sigs:
-         break outer
-      case <-exitStatus:
-         break outer
-      case <-time.After(time.Duration(*interval) * time.Millisecond):
-      }
-
       // handle command
       n, err := unix.Read(fifo, fifoBuf)
       validateNonblock(err)
@@ -222,6 +214,14 @@ outer:
       b = append(b, []byte(",\n")...)
       _, err = file.Write(b)
       validate(err)
+
+      select {
+      case <-sigs:
+         break outer
+      case <-exitStatus:
+         break outer
+      case <-time.After(time.Duration(*interval) * time.Millisecond):
+      }
    }
 
    fileStop()
