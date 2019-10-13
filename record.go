@@ -76,7 +76,7 @@ again:
       fileNameFull = fmt.Sprintf("%s_%d%s", leaf, index, ext)
    }
 
-   flags := os.O_CREATE | os.O_WRONLY
+   flags := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
    if !*overwrite {
       flags |= os.O_EXCL
    }
