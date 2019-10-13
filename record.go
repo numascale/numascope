@@ -130,6 +130,17 @@ func setInterval(input string) {
    *interval = i
 }
 
+func sample() {
+   line := []int64{time.Now().UnixNano() / 1e3}
+   line = append(line, present[0].Sample()...)
+
+   b, err := json.Marshal(line)
+   validate(err)
+   b = append(b, []byte(",\n")...)
+   _, err = file.Write(b)
+   validate(err)
+}
+
 func record(args []string) {
    // always capture per-chip counters
    *discrete = true
@@ -152,6 +163,8 @@ func record(args []string) {
    // launch any command
    exitStatus := make(chan error)
 
+   sample()
+
    if len(args) > 0 {
       cmd := exec.Command(args[0], args[1:]...)
       cmd.Stdin = os.Stdin
@@ -167,13 +180,20 @@ func record(args []string) {
 
 outer:
    for {
+      select {
+      case <-sigs:
+         break outer
+      case <-exitStatus:
+         break outer
+      case <-time.After(time.Duration(*interval) * time.Millisecond):
+      }
+
       // handle command
       n, err := unix.Read(fifo, fifoBuf)
       validateNonblock(err)
 
-      timestamp := time.Now().UnixNano() / 1e3
-
       if n > 0 {
+         timestamp := time.Now().UnixNano() / 1e3
          line := string(bytes.TrimSpace(fifoBuf[:n]))
          fields := strings.SplitN(line, " ", 2)
 
@@ -206,22 +226,13 @@ outer:
          }
       }
 
-      line := []int64{timestamp}
-      line = append(line, present[0].Sample()...)
+      sample()
+   }
 
-      b, err := json.Marshal(line)
-      validate(err)
-      b = append(b, []byte(",\n")...)
-      _, err = file.Write(b)
-      validate(err)
-
-      select {
-      case <-sigs:
-         break outer
-      case <-exitStatus:
-         break outer
-      case <-time.After(time.Duration(*interval) * time.Millisecond):
-      }
+   // capture quiescing
+   for i := 0; i < 2; i++ {
+      time.Sleep(time.Duration(*interval) * time.Millisecond)
+      sample()
    }
 
    fileStop()
