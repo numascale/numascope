@@ -178,6 +178,10 @@ func (d *Kernel) Name() string {
    return "kernel VMstat"
 }
 
+func (d *Kernel) Rate() uint {
+   return 0
+}
+
 func (d *Kernel) Enable(discrete bool) {
    d.nEnabled = 0
 

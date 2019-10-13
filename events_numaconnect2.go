@@ -246,6 +246,10 @@ func (d *Numaconnect2) Name() string {
    return "Numascale NumaConnect2"
 }
 
+func (d *Numaconnect2) Rate() uint {
+   return 200000000
+}
+
 func (d *Numaconnect2) Lock() {
    d.mutex.Lock()
 }

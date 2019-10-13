@@ -33,20 +33,25 @@ type Event struct {
 }
 
 type Sensor interface {
-   // checks if sensor is present
-   Present() bool
+   // human-readable name of hardware
    Name() string
+   // checks if hardware is present
+   Present() bool
+   // maximum sample value for percentages
+   Rate() uint
+   // number of hardware elements detected
    Sources() uint
-   // scans through and activates enabled events, and if discrete
-   Enable(discrete bool)
-   Lock()
-   Unlock()
-   // returns slice of events
+   // supported events
    Events() []Event
-   // returns headings of enabled events, accounting for discrete or not
+   // gets names of enabled events
+   Enable(discrete bool)
+   // gets names of enabled events
    Headings(mnemonic bool) []string
    // returns samples
    Sample() []int64
+   // used to prevent hardware access races
+   Lock()
+   Unlock()
 }
 
 
