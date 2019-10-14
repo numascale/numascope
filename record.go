@@ -101,7 +101,7 @@ again:
    _, err = file.Write(b)
    validate(err)
 
-   fmt.Printf("recording to %v\n", fileNameFull)
+   fmt.Printf("recording to %v with %dms sample interval\n", fileNameFull, *interval)
 }
 
 func setInterval(input string) {
