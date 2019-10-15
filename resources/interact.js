@@ -128,7 +128,7 @@ function enabled(msg) {
                   name: heading+':'+i,
                   type: 'scatter',
                   mode: 'lines',
-                  hoverlabel: {namelength: 50},
+                  hoverlabel: {namelength: 80},
                   x: [], y: [],
                   yaxis: heading[0] == '%' ? 'y2' : 'y1'
                })
@@ -138,7 +138,7 @@ function enabled(msg) {
                name: heading,
                type: 'scatter',
                mode: 'lines',
-               hoverlabel: {namelength: 50},
+               hoverlabel: {namelength: 80},
                x: [], y: [],
                yaxis: (heading[0] == '%') ? 'y2' : 'y1'
             })
@@ -458,7 +458,7 @@ function parse(file) {
          name: heading,
          type: 'scatter',
          mode: 'lines',
-         hoverlabel: {namelength: 50},
+         hoverlabel: {namelength: 80},
          x: [], y: [],
          yaxis: (heading[0] == '%') ? 'y2' : 'y1'
       })
@@ -521,6 +521,7 @@ function parse(file) {
       i++
    }
 
+   layout.legend.orientation = headings.length > 20 ? 'v' : 'h'
    Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 }
 
