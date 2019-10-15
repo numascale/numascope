@@ -437,9 +437,6 @@ function parse(file) {
    }
 
    normalise = json[0][2] / 100
-   if (radServerGroup.checked) // handle per-server
-      normalise *= json[0][1]
-
    reset()
 
    const subtree = document.createElement('details')
