@@ -239,8 +239,8 @@ function button(name, on) {
    return btn
 }
 
-function filterUNC(elems) {
-   if (!radUnitGroup.checked)
+function filterGen(elems, exprs) {
+   if (!exprs.length)
       return elems
 
    // map input series to output series
@@ -248,7 +248,10 @@ function filterUNC(elems) {
    const headings = []
 
    for (let i = 0; i < elems.length; i++) {
-      const name = elems[i].replace(/\.\d+/, '')
+      let name = elems[i]
+
+      for (const expr of exprs)
+         name = name.replace(expr, '')
 
       // coalesce with any matching heading
       const j = headings.indexOf(name)
@@ -263,39 +266,28 @@ function filterUNC(elems) {
    return headings
 }
 
+function filterUNC(elems) {
+   let exprs = []
+
+   if (radServerGroup.checked)
+      exprs.push(/UNC\d+ /)
+
+   if (radServerGroup.checked)
+      exprs.push(/\.\d+/)
+
+   return filterGen(elems, exprs)
+}
+
 function filterNC2(elems) {
-   let expr
+   let exprs = []
 
-   if (radServerGroup.checked && !radServerGroup.checked)
-      expr = /:\d+/
-   else if (radServerGroup.checked && radServerGroup.checked)
-      expr = /( \d+)?:\d+/
-   else if (!radServerGroup.checked && !radServerGroup.checked)
-      expr = / \d+/
-   else // neither set
-      return elems
+   if (radServerGroup.checked)
+      exprs.push(/:\d+/)
 
-   if (!radServerGroup.checked)
-      return elems
+   if (radUnitGroup.checked)
+      exprs.push(/ \d+/)
 
-   // map input series to output series
-   filter = []
-   const headings = []
-
-   for (let i = 0; i < elems.length; i++) {
-      const name = elems[i].replace(expr, '')
-
-      // coalesce with any matching heading
-      const j = headings.indexOf(name)
-
-      if (j == -1) {
-         filter.push(headings.length)
-         headings.push(name)
-      } else
-         filter.push(j)
-   }
-
-   return headings
+   return filterGen(elems, exprs)
 }
 
 // takes an array, reduces it with filter[] and returns the result
