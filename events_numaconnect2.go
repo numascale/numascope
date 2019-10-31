@@ -237,7 +237,7 @@ func (d *Numaconnect2) Sources() uint {
 }
 
 func (d *Numaconnect2) Name() string {
-   return "Numascale NumaConnect2"
+   return "NumaConnect2"
 }
 
 func (d *Numaconnect2) Rate() uint {

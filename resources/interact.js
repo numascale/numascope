@@ -17,6 +17,11 @@
 
 'use strict';
 
+const defaultTraces = {
+   NumaConnect2: '% wait cycles',
+   UNC: 'IOA SCI Intr'
+}
+
 const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
@@ -130,7 +135,8 @@ function enabled(msg) {
                   mode: 'lines',
                   hoverlabel: {namelength: 80},
                   x: [], y: [],
-                  yaxis: heading[0] == '%' ? 'y2' : 'y1'
+                  yaxis: heading[0] == '%' ? 'y2' : 'y1',
+                  visible: heading.includes(defaultTraces[technology]) ? 'true' : 'legendonly'
                })
             }
          } else {
@@ -140,7 +146,8 @@ function enabled(msg) {
                mode: 'lines',
                hoverlabel: {namelength: 80},
                x: [], y: [],
-               yaxis: (heading[0] == '%') ? 'y2' : 'y1'
+               yaxis: (heading[0] == '%') ? 'y2' : 'y1',
+               visible: heading.includes(defaultTraces[technology]) ? 'true' : 'legendonly'
             })
          }
       }
@@ -424,14 +431,15 @@ function parse(file) {
    while (grouping.firstChild)
       grouping.removeChild(grouping.firstChild) */
 
+   const technology = json[0][0]
    let headings = json[1]
 
-   switch(json[0][0]) {
-   case "UNC":
+   switch(technology) {
+   case 'UNC':
       headings = filterUNC(headings)
 //      grouping.appendChild(button('PE unit'))
       break
-   case "Numascale NumaConnect2":
+   case 'NumaConnect2':
       headings = filterNC2(headings)
       break
    }
@@ -442,7 +450,7 @@ function parse(file) {
    const subtree = document.createElement('details')
    const node = document.createElement('summary')
    subtree.appendChild(node)
-   const text = document.createTextNode(json[0][0]+' metrics')
+   const text = document.createTextNode(technology+' metrics')
    node.appendChild(text)
 
    // special button to activate all events
@@ -457,7 +465,8 @@ function parse(file) {
          mode: 'lines',
          hoverlabel: {namelength: 80},
          x: [], y: [],
-         yaxis: (heading[0] == '%') ? 'y2' : 'y1'
+         yaxis: (heading[0] == '%') ? 'y2' : 'y1',
+         visible: heading.includes(defaultTraces[technology]) ? 'true' : 'legendonly'
       })
 
       subtree.appendChild(button(heading, true))
