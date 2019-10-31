@@ -45,7 +45,7 @@ let offline = false
 let filter
 const headings = []
 const layout = {
-   height: 1000,
+   height: 500,
    xaxis: {
       title: 'seconds',
       rangeslider: {},
@@ -55,7 +55,8 @@ const layout = {
       title: 'events',
       hoverformat: ',.3s',
       titlefont: {color: '#1f77b4'},
-      tickfont: {color: '#1f77b4'}
+      tickfont: {color: '#1f77b4'},
+      rangemode: 'tozero'
    },
    yaxis2: {
       title: '%',
@@ -64,7 +65,8 @@ const layout = {
       tickfont: {color: '#ff7f0e'},
       overlaying: 'y',
       side: 'right',
-      showgrid: false
+      showgrid: false,
+      rangemode: 'tozero'
    },
    legend: {
       borderwidth: 34,
