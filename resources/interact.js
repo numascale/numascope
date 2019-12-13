@@ -45,9 +45,9 @@ let offline = false
 let filter
 const headings = []
 const layout = {
-   height: 500,
+   height: 600,
    xaxis: {
-      title: 'seconds',
+//      title: 'seconds',
       rangeslider: {},
       hoverformat: ',.3s'
    },
@@ -138,7 +138,7 @@ function enabled(msg) {
                   hoverlabel: {namelength: 80},
                   x: [], y: [],
                   yaxis: heading[0] == '%' ? 'y2' : 'y1',
-                  visible: heading.includes(defaultTraces[technology]) ? 'true' : 'legendonly'
+//                  visible: heading.includes(defaultTraces[technology]) ? 'true' : 'legendonly'
                })
             }
          } else {
@@ -149,7 +149,7 @@ function enabled(msg) {
                hoverlabel: {namelength: 80},
                x: [], y: [],
                yaxis: (heading[0] == '%') ? 'y2' : 'y1',
-               visible: heading.includes(defaultTraces[technology]) ? 'true' : 'legendonly'
+//               visible: heading.includes(defaultTraces[technology]) ? 'true' : 'legendonly'
             })
          }
       }
