@@ -498,8 +498,8 @@ function parse(file) {
       const elems = reduce(json[row].slice(1, json[row].length))
 
       for (let elem = 0; elem < elems.length; elem++) {
-         data[dataOffset+elem].x.push(seconds)
-         data[dataOffset+elem].y.push(
+         data[/*dataOffset+*/elem].x.push(seconds)
+         data[/*dataOffset+*/elem].y.push(
             (headings[elem][0] == '%') ? (elems[elem] / normalise) : elems[elem])
          totals[elem] += elems[elem]
       }
