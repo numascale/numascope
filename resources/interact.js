@@ -43,7 +43,7 @@ let timestamp = Date.now()
 let interval = 100 // milliseconds
 let offline = false
 let filter
-const headings = []
+let headings = []
 const layout = {
    height: 600,
    xaxis: {
@@ -425,16 +425,22 @@ function parse(file) {
    while (grouping.firstChild)
       grouping.removeChild(grouping.firstChild) */
 
-   const technology = json[0][0]
-   let headings = json[1]
+   // workaround for legacy UNC3 file format
+   if (isNaN(json[0][1])) {
+      json[0].shift() // drop 'UNC' element
+      json.unshift(['UNC', 8, 800000000])
+      alert('Assuming input file is UNC3 @ 800MHz')
+   }
+
+   let technology = json[0][0]
 
    switch(technology) {
-   case 'UNC':
-      headings = filterUNC(headings)
-//      grouping.appendChild(button('PE unit'))
-      break
    case 'NumaConnect2':
-      headings = filterNC2(headings)
+      headings = filterNC2(json[1])
+      break
+   case 'UNC':
+      headings = filterUNC(json[1])
+//      grouping.appendChild(button('PE unit'))
       break
    }
 
