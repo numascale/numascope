@@ -161,7 +161,7 @@ function enabled(msg) {
    // used to check if rangeslider should be updated or not
    if (!listened) {
       graph.on('plotly_relayout', relayout)
-      setInterval(scroll, interval)
+      setInterval(scroller, interval)
       listened = true
    }
 }
@@ -205,7 +205,7 @@ function update(elem) {
    Plotly.extendTraces(graph, {x: x, y: y}, indicies)
 }
 
-function scroll() {
+function scroller() {
    if (scrolling && listened)
       Plotly.relayout(graph, 'xaxis.range', [new Date(timestamp - 60e3), new Date(timestamp)])
 
@@ -375,7 +375,7 @@ function pause() {
    scrolling = false
 }
 
-function stop() {
+function halt() {
    scrolling = false
    if (typeof socket !== 'undefined')
       socket.send(JSON.stringify({Op: 'stop'}))
@@ -488,7 +488,7 @@ function parse(file) {
             })
             break;
          default:
-            alert('unknown op '+op)
+            alert('unknown op '+val)
          }
 
          continue
@@ -533,7 +533,7 @@ function load(file) {
    btnStop.checked = true
    btnStop.parentElement.className = 'btn btn-primary active'
 
-   stop()
+   halt()
 
    const reader = new FileReader()
    reader.onload = parse
