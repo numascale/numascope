@@ -274,8 +274,8 @@ function filterUNC(elems) {
    if (radServerGroup.checked)
       exprs.push(/UNC\d+ /)
 
-   if (radServerGroup.checked)
-      exprs.push(/\.\d+/)
+   if (radUnitGroup.checked)
+      exprs.push(/PE\d+\.\d+ /)
 
    return filterGen(elems, exprs)
 }
