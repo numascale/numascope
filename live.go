@@ -31,14 +31,15 @@ import (
 )
 
 type SignonMessage struct {
-   Tree     map[string][]string
-   Sources  map[string]uint
+   Timestamp int64
+   Tree      map[string][]string
+   Sources   map[string]uint
 }
 
 type ChangeMessage struct {
    Op        string
    Timestamp int64
-   Interval int
+   Interval  int
    Discrete  bool
    Enabled   map[string][]string
 }
@@ -267,6 +268,7 @@ func monitor(w http.ResponseWriter, r *http.Request) {
    }
 
    msg := SignonMessage{
+      Timestamp: time.Now().UnixNano() / 1e3,
       Tree: make(map[string][]string, len(present)),
       Sources: make(map[string]uint, len(present)),
    }

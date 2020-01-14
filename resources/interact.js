@@ -17,11 +17,6 @@
 
 'use strict';
 
-const defaultTraces = {
-   NumaConnect2: '% wait cycles',
-   UNC: 'IOA SCI Intr'
-}
-
 const graph = document.getElementById('graph')
 const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
@@ -39,17 +34,24 @@ let scrolling = true
 let listened = false
 let stopped = false
 let discrete = false
-let timestamp = Date.now()
+let timestamp = 0 // microseconds // Date.now()
 let interval = 100 // milliseconds
 let offline = false
 let filter
 let headings = []
+let timeOffset // microseconds
+
+const defaultTraces = {
+   NumaConnect2: '% wait cycles',
+   UNC: 'IOA SCI Intr'
+}
+
 const layout = {
    height: 600,
    xaxis: {
-//      title: 'seconds',
+      title: 'seconds',
       rangeslider: {},
-      hoverformat: ',.3s'
+      hoverformat: ',.3f'
    },
    yaxis: {
       title: 'events',
@@ -168,7 +170,7 @@ function enabled(msg) {
 
 function label(elem) {
    annotations.push({
-      x: new Date(elem.Timestamp / 1e3),
+      x: (elem.Timestamp - timeOffset) / 1e6, // new Date(elem.Timestamp / 1e3),
       y: 0,
       text: elem.Label,
       arrowhead: 3,
@@ -191,13 +193,13 @@ function update(elem) {
    }
 
    // ensure graph scrolling is synchronised
-   timestamp = elem[elem.length-1][0] / 1e3
+//   timestamp = (elem[elem.length-1][0] - timeOffset) / 1e6
 
    for (const update of elem) {
-      const time = new Date(update[0] / 1e3)
+      const seconds = (update[0] - timeOffset) / 1e6 // new Date(update[0] / 1e3)
 
       for (let i = 1; i < update.length; i++) {
-         x[i-1].push(time)
+         x[i-1].push(seconds)
          y[i-1].push(update[i])
       }
    }
@@ -207,9 +209,9 @@ function update(elem) {
 
 function scroller() {
    if (scrolling && listened)
-      Plotly.relayout(graph, 'xaxis.range', [new Date(timestamp - 60e3), new Date(timestamp)])
+      Plotly.relayout(graph, 'xaxis.range', [timestamp - 60, timestamp]) // [new Date(timestamp - 60e3), new Date(timestamp)])
 
-   timestamp += interval
+   timestamp += interval / 1e3
 }
 
 function select(info) {
@@ -317,6 +319,7 @@ function signon(elem) {
    reset()
 
    const container = document.querySelector('#events')
+   timeOffset = elem.Timestamp
 
    for (const key in elem.Tree) {
       let elems = elem.Tree[key]
@@ -411,6 +414,9 @@ function reset() {
 function parse(file) {
    let json
 
+   // disable scrolling
+   listened = false
+
    try {
       json = JSON.parse(file.target.result)
    } catch (e) {
@@ -428,8 +434,7 @@ function parse(file) {
    // workaround for legacy UNC3 file format
    if (isNaN(json[0][1])) {
       json[0].shift() // drop 'UNC' element
-      json.unshift(['UNC', 8, 800000000])
-      alert('Assuming input file is UNC3 @ 800MHz')
+      json.unshift(['UNC', 8, 850000000])
    }
 
    let technology = json[0][0]
@@ -476,7 +481,7 @@ function parse(file) {
    const container = document.querySelector('#events')
    container.appendChild(subtree)
 
-   const timeOffset = json[2][0]
+   timeOffset = json[2][0]
    for (let row = 2; row < json.length; row++) {
       const val = json[row][0]
 
@@ -528,6 +533,7 @@ function parse(file) {
    }
 
    layout.legend.orientation = headings.length > 20 ? 'v' : 'h'
+   layout.xaxis.autorange = true
    Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 }
 
