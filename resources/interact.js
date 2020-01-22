@@ -71,8 +71,7 @@ const layout = {
       rangemode: 'tozero'
    },
    legend: {
-      borderwidth: 34,
-      bordercolor: "#ffffff"
+      orientation: 'v'
    },
    annotations: []
 }
@@ -157,7 +156,6 @@ function enabled(msg) {
       }
    }
 
-   layout.legend.orientation = total > 20 ? 'v' : 'h'
    Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 
    // used to check if rangeslider should be updated or not
@@ -532,7 +530,6 @@ function parse(file) {
       i++
    }
 
-   layout.legend.orientation = headings.length > 20 ? 'v' : 'h'
    layout.xaxis.autorange = true
    Plotly.react(graph, data, layout, {displaylogo: false, responsive: true})
 }
