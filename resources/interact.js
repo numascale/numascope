@@ -36,12 +36,11 @@ let scrolling = true
 let listened = false
 let stopped = false
 let discrete = false
-let timestamp = 0 // microseconds // Date.now()
+let timestamp = Date.now()
 let interval = 100 // milliseconds
 let offline = false
 let filter
 let headings = []
-let timeOffset // microseconds
 
 const defaultTraces = {
    NumaConnect2: '% wait cycles',
@@ -51,9 +50,8 @@ const defaultTraces = {
 const layout = {
    height: 600,
    xaxis: {
-      title: 'seconds',
       rangeslider: {},
-      hoverformat: ',.3f'
+      hoverformat: '%H:%M:%S.%3f'
    },
    yaxis: {
       title: 'events',
@@ -170,7 +168,7 @@ function enabled(msg) {
 
 function label(elem) {
    annotations.push({
-      x: (elem.Timestamp - timeOffset) / 1e6, // new Date(elem.Timestamp / 1e3),
+      x: new Date(elem.Timestamp / 1e3),
       y: 0,
       text: elem.Label,
       arrowhead: 3,
@@ -192,14 +190,13 @@ function update(elem) {
       y.push([])
    }
 
-   // ensure graph scrolling is synchronised
-//   timestamp = (elem[elem.length-1][0] - timeOffset) / 1e6
+   timestamp = elem[elem.length-1][0] / 1e3
 
    for (const update of elem) {
-      const seconds = (update[0] - timeOffset) / 1e6 // new Date(update[0] / 1e3)
+      const time = new Date(update[0] / 1e3)
 
       for (let i = 1; i < update.length; i++) {
-         x[i-1].push(seconds)
+         x[i-1].push(time)
          y[i-1].push(update[i])
       }
    }
@@ -209,9 +206,9 @@ function update(elem) {
 
 function scroller() {
    if (scrolling && listened)
-      Plotly.relayout(graph, 'xaxis.range', [timestamp - 60, timestamp]) // [new Date(timestamp - 60e3), new Date(timestamp)])
+      Plotly.relayout(graph, 'xaxis.range', [new Date(timestamp - 60e3), new Date(timestamp)])
 
-   timestamp += interval / 1e3
+   timestamp += interval
 }
 
 function select(info) {
@@ -323,7 +320,6 @@ function signon(elem) {
    reset()
 
    const container = document.querySelector('#events')
-   timeOffset = elem.Timestamp
 
    for (const key in elem.Tree) {
       let elems = elem.Tree[key]
@@ -489,7 +485,7 @@ function parse(file) {
    const container = document.querySelector('#events')
    container.appendChild(subtree)
 
-   timeOffset = json[2][0]
+   const timeOffset = json[2][0]
    for (let row = 2; row < json.length; row++) {
       const val = json[row][0]
 
@@ -513,12 +509,12 @@ function parse(file) {
          continue
       }
 
-      const seconds = (val - timeOffset) / 1e6
+      const time = new Date(val / 1e3)
       const elems = reduce(json[row].slice(1, json[row].length))
 
       for (let elem = 0; elem < elems.length; elem++) {
-         data[/*dataOffset+*/elem].x.push(seconds)
-         data[/*dataOffset+*/elem].y.push(
+         data[elem].x.push(time)
+         data[elem].y.push(
             (headings[elem][0] == '%') ? (elems[elem] / normalise) : elems[elem])
          totals[elem] += elems[elem]
       }
