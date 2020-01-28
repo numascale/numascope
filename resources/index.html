@@ -35,13 +35,17 @@ Loading model...
    </div>
    <div class="col-sm-4">
       <label>Resolution <input type="range" class="custom-range" min="0" max="16" value="6" id="data-interval" oninput="slider(this)" style="width: 100px;vertical-align: middle"></label> 256ms</div>
-   <div class="col-sm-2 custom-control custom-switch">
+   <div class="col-sm-1 custom-control custom-switch">
       <input type="checkbox" checked class="custom-control-input" id="serverGroup" onclick="serverGroupChange(this)">
-      <label class="custom-control-label" for="serverGroup">group servers</label>
+      <label class="custom-control-label" for="serverGroup">servers</label>
    </div>
-   <div class="col-sm-2 custom-control custom-switch">
+   <div class="col-sm-1 custom-control custom-switch">
+      <input type="checkbox" checked class="custom-control-input" id="portGroup" onclick="portGroupChange(this)">
+      <label class="custom-control-label" for="portGroup">ports</label>
+   </div>
+   <div class="col-sm-1 custom-control custom-switch">
       <input type="checkbox" checked class="custom-control-input" id="unitGroup" onclick="unitGroupChange(this)">
-      <label class="custom-control-label" for="unitGroup">group units</label>
+      <label class="custom-control-label" for="unitGroup">units</label>
    </div>
    <div class="col-sm-1">
     <label class="btn btn-primary btn-sm" onchange="load(childNodes[1].files[0])">

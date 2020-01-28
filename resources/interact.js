@@ -22,10 +22,12 @@ const btnPlay = document.getElementById('btn-play')
 const btnPause = document.getElementById('btn-pause')
 const btnStop = document.getElementById('btn-stop')
 const radServerGroup = document.getElementById('serverGroup')
+const radPortGroup = document.getElementById('portGroup')
 const radUnitGroup = document.getElementById('unitGroup')
 const annotations = []
 const buttons = []
 let normalise // used to derive percentage
+let portGroup = true
 let unitGroup = true
 let socket
 let signedon
@@ -251,7 +253,7 @@ function filterGen(elems, exprs) {
       let name = elems[i]
 
       for (const expr of exprs)
-         name = name.replace(expr, '')
+         name = name.replace(expr[0], expr[1])
 
       // coalesce with any matching heading
       const j = headings.indexOf(name)
@@ -269,11 +271,15 @@ function filterGen(elems, exprs) {
 function filterUNC(elems) {
    let exprs = []
 
+
    if (radServerGroup.checked)
-      exprs.push(/UNC\d+ /)
+      exprs.push([/UNC\d+ /, ''])
+
+   if (radPortGroup.checked)
+      exprs.push([/PE\d+\./, 'PE*.'])
 
    if (radUnitGroup.checked)
-      exprs.push(/PE\d+\.\d+ /)
+      exprs.push([/\.\d+/, '.*'])
 
    return filterGen(elems, exprs)
 }
@@ -282,10 +288,10 @@ function filterNC2(elems) {
    let exprs = []
 
    if (radServerGroup.checked)
-      exprs.push(/:\d+/)
+      exprs.push([/:\d+/, ''])
 
    if (radUnitGroup.checked)
-      exprs.push(/ \d+/)
+      exprs.push([/ \d+/, ''])
 
    return filterGen(elems, exprs)
 }
@@ -396,6 +402,10 @@ function serverGroupChange(control) {
 
    if (typeof socket !== 'undefined')
       socket.send(msg)
+}
+
+function portGroupChange(control) {
+   portGroup = control.checked
 }
 
 function unitGroupChange(control) {
