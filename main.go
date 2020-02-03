@@ -20,7 +20,9 @@ package main
 import (
    "flag"
    "fmt"
+   "io/ioutil"
    "os"
+   "strconv"
    "strings"
 
    "golang.org/x/sys/unix"
@@ -28,6 +30,7 @@ import (
 
 const (
    fifoPath = "/run/numascope-ctl"
+   pidPath = "/run/numascope.pid"
    coalescing = 600e3
 )
 
@@ -96,6 +99,27 @@ func usage() {
    flag.PrintDefaults()
 }
 
+func exclusive() {
+   content, err := ioutil.ReadFile(pidPath)
+
+   if err == nil {
+      pid, err := strconv.Atoi(strings.TrimSpace(string(content)))
+
+      if err == nil {
+         err = unix.Kill(pid, unix.Signal(0))
+
+         if err == nil {
+            fmt.Println("numascope already running")
+            os.Exit(1)
+         }
+      }
+   }
+
+   pidStr := strconv.Itoa(os.Getpid())+"\n"
+   err = ioutil.WriteFile(pidPath, []byte(pidStr), 0644)
+   validate(err)
+}
+
 func main() {
    pin()
 
@@ -106,6 +130,8 @@ func main() {
       fmt.Println("please run with sudo/root")
       os.Exit(1)
    }
+
+   exclusive()
 
    // remove any sensors where probe fails
    for i := len(present)-1; i >= 0; i-- {
